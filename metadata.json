@@ -1,0 +1,7 @@
+{
+  "name": "SafaArban Business Gateway",
+  "description": "A comprehensive platform for Saudi Arabian business setup, MISA licensing, and government relations services, featuring an AI-powered business advisor and instant quotation system.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
