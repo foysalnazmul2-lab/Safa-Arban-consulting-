@@ -12,30 +12,43 @@ interface QuotationProps {
 }
 
 const OfficialStamp = () => (
-  <svg width="160" height="160" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="opacity-90 mix-blend-multiply pointer-events-none select-none">
+  <svg width="180" height="180" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="opacity-90 mix-blend-multiply pointer-events-none select-none rotate-[-12deg]">
     <defs>
-      <path id="textTop" d="M 40,100 A 60,60 0 0,1 160,100" fill="none" />
-      <path id="textBottom" d="M 35,100 A 65,65 0 0,0 165,100" fill="none" />
+      <path id="sealTop" d="M 25,100 A 75,75 0 0,1 175,100" fill="none" />
+      <path id="sealBottom" d="M 25,100 A 75,75 0 0,0 175,100" fill="none" />
     </defs>
-    <g stroke="#0F2847" fill="none" strokeWidth="2">
-      <circle cx="100" cy="100" r="90" strokeWidth="3" />
-      <circle cx="100" cy="100" r="85" strokeWidth="1" />
-      <circle cx="100" cy="100" r="60" strokeWidth="1" />
-    </g>
-    <text fill="#0F2847" fontSize="10" fontWeight="bold" fontFamily="serif" letterSpacing="1.5">
-      <textPath href="#textTop" startOffset="50%" textAnchor="middle">
-        ★ SAFA ARBAN LTD ★
+    
+    {/* Outer Double Ring */}
+    <circle cx="100" cy="100" r="95" fill="none" stroke="#1e40af" strokeWidth="3" />
+    <circle cx="100" cy="100" r="88" fill="none" stroke="#1e40af" strokeWidth="1" />
+    
+    {/* Inner Ring */}
+    <circle cx="100" cy="100" r="62" fill="none" stroke="#1e40af" strokeWidth="1" />
+
+    {/* Curved Text - Top */}
+    <text fill="#1e40af" fontSize="18" fontWeight="bold" fontFamily="Arial, sans-serif" letterSpacing="1">
+      <textPath href="#sealTop" startOffset="50%" textAnchor="middle">
+        SAFAARBAN LTD
       </textPath>
     </text>
-    <text fill="#0F2847" fontSize="10" fontWeight="bold" fontFamily="serif" letterSpacing="1">
-       <textPath href="#textBottom" startOffset="50%" textAnchor="middle">
-         C.R. {BRAND.contact.cr}
+    
+    {/* Curved Text - Bottom */}
+    <text fill="#1e40af" fontSize="12" fontWeight="bold" fontFamily="Arial, sans-serif" letterSpacing="1">
+       <textPath href="#sealBottom" startOffset="50%" textAnchor="middle">
+         RIYADH, SAUDI ARABIA
        </textPath>
     </text>
-    <g transform="translate(100, 100)" fill="#0F2847" textAnchor="middle">
-        <text y="-5" fontSize="14" fontWeight="900" fontFamily="sans-serif" letterSpacing="1">OFFICIAL</text>
-        <text y="12" fontSize="14" fontWeight="900" fontFamily="sans-serif" letterSpacing="1">SEAL</text>
-        <text y="28" fontSize="7" fontWeight="bold" fontFamily="monospace">RIYADH</text>
+    
+    {/* Decorative Stars */}
+    <text x="18" y="105" fill="#1e40af" fontSize="16" fontWeight="bold" dominantBaseline="middle">★</text>
+    <text x="168" y="105" fill="#1e40af" fontSize="16" fontWeight="bold" dominantBaseline="middle">★</text>
+
+    {/* Center Block */}
+    <g transform="translate(100, 100)" textAnchor="middle">
+        <text y="-18" fontSize="9" fontWeight="bold" fontFamily="Arial, sans-serif" fill="#1e40af">CR No</text>
+        <text y="-6" fontSize="11" fontWeight="bold" fontFamily="Courier New, monospace" fill="#1e40af">{BRAND.contact.cr}</text>
+        <text y="12" fontSize="9" fontWeight="bold" fontFamily="Arial, sans-serif" fill="#1e40af">VAT No</text>
+        <text y="24" fontSize="11" fontWeight="bold" fontFamily="Courier New, monospace" fill="#1e40af">{BRAND.contact.vat}</text>
     </g>
   </svg>
 );
@@ -45,7 +58,36 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
   const totalGov = items.reduce((sum, i) => sum + i.governmentFee, 0);
   const vat = totalProf * 0.15; 
   const invoiceTotal = totalProf + vat;
-  const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const handleExport = () => {
+    const element = document.getElementById('printable-invoice');
+    const opt = {
+      margin: 0, // No margin to keep full design
+      filename: `SafaArban_Quote_${orderId}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        scrollY: 0,
+        windowWidth: 794 // A4 width in pixels approx (96 DPI)
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    if ((window as any).html2pdf) {
+         // Add loading state logic if needed, but for now direct call
+         const btn = document.getElementById('export-btn');
+         if(btn) btn.innerText = 'Generating...';
+         
+         (window as any).html2pdf().set(opt).from(element).save().then(() => {
+            if(btn) btn.innerText = 'Print / Export PDF';
+         });
+    } else {
+        window.print();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 py-4 md:py-12 px-2 sm:px-4 no-print-bg font-sans">
@@ -59,7 +101,8 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
           
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <button 
-              onClick={() => window.print()} 
+              id="export-btn"
+              onClick={handleExport}
               className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-200 text-[#0A1A2F] px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
             >
               <Download size={16} /> Print / Export PDF
@@ -84,85 +127,95 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
         <div className="overflow-x-auto pb-10 -mx-2 px-2 md:mx-0 md:px-0">
           <div className="bg-white shadow-2xl min-h-[297mm] min-w-[210mm] w-[210mm] relative flex flex-col text-[#0A1A2F] mx-auto border border-slate-200" id="printable-invoice">
             
-            <div className="h-2 w-full bg-[#0A1A2F]"></div>
-
-            <div className="p-12 md:p-16 flex-grow flex flex-col">
-              
-              <div className="flex justify-between items-start border-b border-slate-100 pb-12 mb-12">
+            {/* Professional Header */}
+            <div className="flex justify-between items-start p-12 md:p-16 pb-8 border-b-4 border-[#0A1A2F]">
                 <div>
-                  <div className="flex items-baseline gap-1 mb-6">
+                  <div className="flex items-baseline gap-1 mb-4">
                     <span className="text-4xl font-black tracking-tighter text-[#0A1A2F]">SAFA</span>
                     <span className="text-4xl font-black tracking-tighter text-[#C9A86A]">ARBAN</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest space-y-1.5">
-                    <p>{BRAND.fullName}</p>
-                    <p>CR: {BRAND.contact.cr} | VAT: {BRAND.contact.vat}</p>
-                    <p className="max-w-[300px] leading-relaxed">{BRAND.contact.address}</p>
+                  <div className="text-[10px] text-slate-600 font-bold uppercase tracking-widest space-y-1">
+                    <p>Business Setup Consultants</p>
+                    <p>{BRAND.contact.address}</p>
+                    <p>Riyadh, Saudi Arabia</p>
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <h1 className="text-5xl font-light text-slate-200 tracking-wide uppercase mb-6">Quote</h1>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-end gap-6">
-                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">ID Reference</span>
-                        <span className="text-sm font-black text-[#0A1A2F] font-mono">{orderId}</span>
-                    </div>
-                    <div className="flex items-center justify-end gap-6">
-                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Issue Date</span>
-                        <span className="text-sm font-black text-[#0A1A2F]">{date}</span>
-                    </div>
-                    <div className="flex items-center justify-end gap-6 pt-2">
-                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Exp Date</span>
-                        <span className="text-sm font-black text-[#0A1A2F]">{(new Date(Date.now() + 14*24*60*60*1000)).toLocaleDateString('en-GB')}</span>
-                    </div>
-                  </div>
+                <div className="text-right text-[10px] text-slate-500 font-medium space-y-1">
+                    <p><span className="font-bold text-[#0A1A2F]">Mobile:</span> {BRAND.contact.phone}</p>
+                    <p><span className="font-bold text-[#0A1A2F]">Email:</span> {BRAND.contact.email}</p>
+                    <p><span className="font-bold text-[#0A1A2F]">Web:</span> www.safaarban.com</p>
                 </div>
-              </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-16 mb-16">
+            <div className="p-12 md:p-16 flex-grow flex flex-col">
+              
+              <div className="flex justify-between items-end mb-12">
                 <div>
-                    <h3 className="text-[11px] font-black uppercase text-[#C9A86A] tracking-[0.3em] mb-6">Service Provider</h3>
-                    <div className="text-sm text-slate-600 space-y-2 leading-relaxed">
-                      <p className="font-bold text-[#0A1A2F]">{BRAND.fullName}</p>
-                      <p>Corporate HQ Riyadh</p>
-                      <p>Gateway Hub, Olaya District</p>
-                      <p>{BRAND.contact.email}</p>
-                    </div>
+                    <h1 className="text-4xl font-black text-[#0A1A2F] mb-1">QUOTATION</h1>
+                    <p className="text-xs text-slate-500 font-medium">For Establishment of Business Entity in Saudi Arabia</p>
                 </div>
-                <div>
-                    <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.3em] mb-6">Prepared For</h3>
-                    <div className="bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200">
-                      <p className="text-xs text-slate-400 font-bold leading-relaxed">The following breakdown is tailored to your business profile. Details will be finalized upon authorization.</p>
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl min-w-[200px]">
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                        <span>Date:</span>
+                        <span className="text-[#0A1A2F]">{date}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                        <span>Ref No:</span>
+                        <span className="text-[#0A1A2F] font-mono">{orderId}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                        <span>Validity:</span>
+                        <span className="text-[#0A1A2F]">30 Days</span>
                     </div>
                 </div>
               </div>
 
-              <div className="mb-12">
-                <table className="w-full text-left border-collapse">
+              {/* Client & Service Info */}
+              <div className="grid grid-cols-2 gap-12 mb-12 border-b border-slate-100 pb-8">
+                <div>
+                    <h3 className="text-[11px] font-black uppercase text-[#0A1A2F] tracking-widest mb-3 border-b border-[#C9A86A] w-fit pb-1">Client Information</h3>
+                    <div className="text-sm text-slate-600 space-y-1">
+                      <p><span className="font-bold">Name:</span> Valued Client</p>
+                      <p><span className="font-bold">Location:</span> Saudi Arabia / International</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-[11px] font-black uppercase text-[#0A1A2F] tracking-widest mb-3 border-b border-[#C9A86A] w-fit pb-1">Scope of Engagement</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                        SafaArban Business Setup Consultants will provide end-to-end services for the selected scope, ensuring compliance with MISA, Ministry of Commerce, and ZATCA regulations.
+                    </p>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="mb-8">
+                <h3 className="text-[11px] font-black uppercase text-[#0A1A2F] tracking-widest mb-4 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-[#0A1A2F]"></div> Quotation Amount
+                </h3>
+                <table className="w-full text-left border-collapse border border-slate-200">
                     <thead>
-                      <tr className="bg-slate-50 border-y border-slate-100">
-                        <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400 w-16 text-center">No.</th>
-                        <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Strategic Service Description</th>
-                        <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Fee (SAR)</th>
+                      <tr className="bg-[#0A1A2F] text-white">
+                        <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest w-16 text-center border-r border-white/10">S.No</th>
+                        <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest border-r border-white/10">Description</th>
+                        <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-right w-32">Amount (SAR)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {items.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="py-16 text-center text-slate-300 text-sm font-black uppercase tracking-widest bg-slate-50/50">
-                            Selection empty.
+                          <td colSpan={3} className="py-8 text-center text-slate-400 text-xs italic">
+                            No services selected.
                           </td>
                         </tr>
                       ) : (
                         items.map((item, idx) => (
-                          <tr key={item.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/30 transition-colors">
-                            <td className="py-6 px-6 text-xs font-black text-slate-300 text-center">{(idx + 1).toString().padStart(2, '0')}</td>
-                            <td className="py-6 px-6">
-                              <p className="text-sm font-black text-[#0A1A2F]">{item.name}</p>
-                              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{item.category}</p>
+                          <tr key={item.id} className="border-b border-slate-100 text-sm">
+                            <td className="py-4 px-4 text-center font-bold text-slate-500 border-r border-slate-100">{idx + 1}</td>
+                            <td className="py-4 px-4 border-r border-slate-100">
+                              <p className="font-bold text-[#0A1A2F]">{item.name}</p>
+                              <p className="text-xs text-slate-500 mt-1">{item.desc}</p>
                             </td>
-                            <td className="py-6 px-6 text-right text-sm font-black font-mono">{item.professionalFee.toLocaleString()}</td>
+                            <td className="py-4 px-4 text-right font-mono font-bold text-[#0A1A2F]">{item.professionalFee.toLocaleString()}</td>
                           </tr>
                         ))
                       )}
@@ -170,80 +223,64 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
                 </table>
               </div>
 
-              {totalGov > 0 && (
-                <div className="mb-16 bg-[#006C35]/5 border border-[#006C35]/10 rounded-[2rem] p-6 flex gap-6 items-center">
-                    <div className="p-3 bg-white rounded-2xl shadow-sm text-[#006C35]">
-                      <Landmark size={24} />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black text-[#006C35] uppercase tracking-[0.2em] mb-1">Pass-Through Government Costs</p>
-                      <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
-                          SADAD official costs (~{totalGov.toLocaleString()} SAR) are estimated liabilities payable to KSA authorities. These are not professional income for SafaArban.
-                      </p>
-                    </div>
-                </div>
-              )}
-
-              <div className="mt-auto">
-                <div className="flex justify-between items-end gap-20 border-t border-slate-100 pt-10">
-                    <div className="flex-1">
-                      <h4 className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-6">Payment Authorization Gateway</h4>
-                      <div className="grid grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                         <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Bank Name</p>
-                            <p className="text-xs font-black text-[#0A1A2F]">Arab National Bank</p>
-                         </div>
-                         <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Holder</p>
-                            <p className="text-xs font-black text-[#0A1A2F]">SafaArban Ltd</p>
-                         </div>
-                         <div className="col-span-2">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">IBAN (International Business Account Number)</p>
-                            <p className="text-sm font-black text-[#0A1A2F] font-mono tracking-wider">{BRAND.contact.iban}</p>
-                         </div>
+              {/* Totals & Notes */}
+              <div className="flex flex-col md:flex-row gap-8 items-start mb-12">
+                  <div className="flex-1 space-y-4">
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                          <h4 className="text-[10px] font-black uppercase text-[#0A1A2F] mb-2">Government Fees Note</h4>
+                          <p className="text-[10px] text-slate-500 leading-relaxed">
+                              * Government fees (approx {totalGov.toLocaleString()} SAR) are excluded from the service total above and are payable at actuals via SADAD or directly to the relevant authority.
+                          </p>
                       </div>
-                    </div>
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                          <h4 className="text-[10px] font-black uppercase text-[#0A1A2F] mb-2">Payment Terms</h4>
+                          <ul className="text-[10px] text-slate-500 list-disc pl-4 space-y-1">
+                              <li>50% Advance upon initiation.</li>
+                              <li>50% Upon C.R. issuance & document delivery.</li>
+                          </ul>
+                      </div>
+                  </div>
 
-                    <div className="w-[300px]">
-                      <div className="space-y-4">
-                          <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400">
-                            <span>Subtotal</span>
-                            <span className="font-mono text-[#0A1A2F]">{totalProf.toLocaleString()}</span>
+                  <div className="w-full md:w-72">
+                      <div className="border border-slate-200 rounded-xl overflow-hidden">
+                          <div className="flex justify-between p-3 bg-slate-50 border-b border-slate-100">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase">Subtotal</span>
+                              <span className="text-sm font-bold text-[#0A1A2F]">{totalProf.toLocaleString()} SAR</span>
                           </div>
-                          <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400">
-                            <span>VAT (15%)</span>
-                            <span className="font-mono text-[#0A1A2F]">{vat.toLocaleString()}</span>
+                          <div className="flex justify-between p-3 bg-slate-50 border-b border-slate-100">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase">VAT (15%)</span>
+                              <span className="text-sm font-bold text-[#0A1A2F]">{vat.toLocaleString()} SAR</span>
                           </div>
-                          <div className="h-px bg-slate-100"></div>
-                          <div className="flex justify-between items-baseline pt-2">
-                            <span className="text-sm font-black text-[#0A1A2F] uppercase tracking-[0.2em]">Net Total</span>
-                            <span className="text-4xl font-black text-[#0A1A2F] font-mono tracking-tighter">{invoiceTotal.toLocaleString()} <span className="text-[10px] text-slate-300 font-sans">SAR</span></span>
+                          <div className="flex justify-between p-4 bg-[#0A1A2F] text-white">
+                              <span className="text-xs font-bold uppercase">Total Service Fee</span>
+                              <span className="text-lg font-black">{invoiceTotal.toLocaleString()} SAR</span>
                           </div>
                       </div>
-                    </div>
-                </div>
+                  </div>
+              </div>
 
-                <div className="mt-20 flex justify-between items-end border-t border-slate-50 pt-10">
-                    <div className="text-[9px] text-slate-400 space-y-2 uppercase font-black tracking-widest">
-                      <p className="text-[#0A1A2F]">Legal Disclosure</p>
-                      <p>• Prices exclude municipal specific levies.</p>
-                      <p>• Subject to SafaArban Elite Service Agreement.</p>
-                    </div>
-                    
-                    <div className="relative text-center">
-                      <div className="absolute -top-32 left-1/2 -translate-x-1/2">
+              <div className="mt-auto pt-8 border-t border-slate-200 flex justify-between items-end">
+                  <div className="text-[10px] text-slate-500 space-y-1">
+                      <p className="font-bold text-[#0A1A2F] uppercase mb-1">Payment Instructions</p>
+                      <p>Bank Name: <span className="font-bold">Arab National Bank</span></p>
+                      <p>Account Name: <span className="font-bold">SafaArban Ltd</span></p>
+                      <p>IBAN: <span className="font-mono font-bold text-[#0A1A2F] bg-slate-100 px-1">{BRAND.contact.iban}</span></p>
+                  </div>
+                  
+                  <div className="relative text-center w-40">
+                      <div className="absolute -top-24 left-1/2 -translate-x-1/2">
                           <OfficialStamp />
                       </div>
-                      <div className="relative z-10 pt-10 border-t border-slate-200 w-56 mt-10">
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Certified Signature</p>
+                      <div className="border-t border-slate-300 pt-2 mt-10">
+                          <p className="text-[10px] font-bold uppercase text-[#0A1A2F]">Authorized Signatory</p>
+                          <p className="text-[9px] text-slate-400">SafaArban Ltd</p>
                       </div>
-                    </div>
-                </div>
+                  </div>
               </div>
             </div>
             
-            <div className="bg-[#0A1A2F] text-white p-4 text-center text-[9px] uppercase tracking-[0.4em] font-black">
-              Vision 2030 Strategic Partner • SafaArban Elite Gateway • Riyadh, KSA
+            <div className="bg-[#0A1A2F] text-white p-3 text-center text-[8px] uppercase tracking-widest font-medium border-t border-[#C9A86A]">
+              SafaArban Ltd | CR No: {BRAND.contact.cr} | VAT No: {BRAND.contact.vat} | Riyadh, Saudi Arabia
             </div>
           </div>
         </div>

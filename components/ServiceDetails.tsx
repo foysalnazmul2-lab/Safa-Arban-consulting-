@@ -1,15 +1,23 @@
 
 import React from 'react';
 import { CorePageContent } from '../types';
-import { ArrowLeft, CheckCircle2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ArrowRight, ShieldCheck, Check } from 'lucide-react';
 
 interface ServiceDetailsProps {
   content: CorePageContent;
   onBack: () => void;
-  onGetQuote: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
+  isActionActive?: boolean;
 }
 
-const ServiceDetails: React.FC<ServiceDetailsProps> = ({ content, onBack, onGetQuote }) => {
+const ServiceDetails: React.FC<ServiceDetailsProps> = ({ 
+  content, 
+  onBack, 
+  actionLabel = "Calculate Fees Now", 
+  onAction,
+  isActionActive = false
+}) => {
   return (
     <div className="bg-white min-h-screen">
       {/* Hero Section */}
@@ -37,10 +45,18 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({ content, onBack, onGetQ
             {content.title}
           </h1>
           <button 
-            onClick={onGetQuote}
-            className="w-fit bg-[#E9443E] text-white px-8 py-4 rounded-full font-black uppercase tracking-widest text-xs hover:bg-white hover:text-[#0A1A2F] transition-all flex items-center gap-3 shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200"
+            onClick={onAction}
+            className={`w-fit px-8 py-4 rounded-full font-black uppercase tracking-widest text-xs transition-all flex items-center gap-3 shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200 ${
+              isActionActive 
+              ? 'bg-[#006C35] text-white hover:bg-[#005a2c]' 
+              : 'bg-[#E9443E] text-white hover:bg-white hover:text-[#0A1A2F]'
+            }`}
           >
-            {content.cta} <ArrowRight size={16} />
+            {isActionActive ? (
+              <><Check size={16} /> Added to Quote</>
+            ) : (
+              <>{actionLabel} <ArrowRight size={16} /></>
+            )}
           </button>
         </div>
       </div>
@@ -95,10 +111,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({ content, onBack, onGetQ
                Start your application today. Add this service to your quotation and get a detailed cost breakdown instantly.
             </p>
             <button 
-              onClick={onGetQuote}
-              className="bg-[#C9A86A] text-[#0A1A2F] px-12 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-white transition-all shadow-2xl scale-100 hover:scale-105"
+              onClick={onAction}
+              className={`px-12 py-5 rounded-full font-black uppercase tracking-widest text-xs transition-all shadow-2xl scale-100 hover:scale-105 ${
+                isActionActive 
+                ? 'bg-[#006C35] text-white hover:bg-[#005a2c]' 
+                : 'bg-[#C9A86A] text-[#0A1A2F] hover:bg-white'
+              }`}
             >
-               Calculate Fees Now
+               {isActionActive ? 'Service Selected' : actionLabel}
             </button>
          </div>
       </div>

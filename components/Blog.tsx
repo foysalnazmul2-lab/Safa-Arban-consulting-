@@ -1,11 +1,18 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BLOG_POSTS } from '../constants';
 import { BlogPost } from '../types';
 import { Calendar, User, Tag, ArrowRight, X, Clock } from 'lucide-react';
+import { BlogSkeleton } from './Skeletons';
 
 const Blog: React.FC = () => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate network delay
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="bg-slate-50 min-h-screen py-16 md:py-24">
@@ -17,8 +24,13 @@ const Blog: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
-             {BLOG_POSTS.map((post) => (
-                <div key={post.id} className="bg-white rounded-[2rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all border border-slate-100 group flex flex-col h-full">
+             {isLoading ? (
+               Array.from({ length: 4 }).map((_, i) => (
+                 <BlogSkeleton key={i} />
+               ))
+             ) : (
+               BLOG_POSTS.map((post) => (
+                <div key={post.id} className="bg-white rounded-[2rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all border border-slate-100 group flex flex-col h-full animate-in slide-in-from-bottom-4 duration-500">
                    <div className="h-56 md:h-64 overflow-hidden relative">
                       <img 
                         src={post.image} 
@@ -52,7 +64,8 @@ const Blog: React.FC = () => {
                       </button>
                    </div>
                 </div>
-             ))}
+               ))
+             )}
           </div>
        </div>
 
@@ -65,7 +78,7 @@ const Blog: React.FC = () => {
                  onClick={() => setSelectedPost(null)}
                  className="absolute top-4 right-4 md:top-6 md:right-6 p-2 md:p-3 bg-white/20 hover:bg-white text-white hover:text-[#0A1A2F] rounded-full backdrop-blur-md transition-all z-20"
                >
-                 <X size={20} md:size={24} />
+                 <X className="w-5 h-5 md:w-6 md:h-6" />
                </button>
 
                <div className="h-64 md:h-96 relative shrink-0">

@@ -174,6 +174,16 @@ export const SERVICES_DB: Service[] = [
     code: 'PAS-VIS',
     desc: 'Processing travel permits for resident employees.',
   },
+  {
+    id: 'pass-visa-iqama',
+    category: 'Passports / Muqeem',
+    name: 'Visa & Iqama Processing',
+    professionalFee: 2000,
+    governmentFee: 3500,
+    price: 5500,
+    code: 'PAS-IQM',
+    desc: 'Facilitating employee and investor visa applications and annual Iqama renewals.'
+  },
 
   // --- GOSI ---
   { 

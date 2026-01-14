@@ -1,9 +1,18 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, X, Bot, Loader2, Image as ImageIcon, Sparkles, Download, Maximize2, Scan, Upload, FileSearch } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, Loader2, Image as ImageIcon, Sparkles, Download, Maximize2, Scan, Upload, FileSearch, Quote, Eraser, RefreshCw } from 'lucide-react';
 import { gemini } from '../geminiService';
 import { ChatMessage } from '../types';
 
 type AssistantMode = 'chat' | 'visual' | 'scan';
+
+const SCAN_TEMPLATES = [
+  "Analyze this document for Saudi business compliance.",
+  "Extract key dates (start, expiry) from this contract.",
+  "Summarize the main points of this MISA license.",
+  "Identify potential compliance risks in this document.",
+  "Translate key fields from Arabic to English."
+];
 
 const AIAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,9 +25,13 @@ const AIAssistant: React.FC = () => {
   const [imageSize, setImageSize] = useState<"1K" | "2K" | "4K">("1K");
   const [generatedImages, setGeneratedImages] = useState<{url: string, prompt: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Scan Mode State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [scanPrompt, setScanPrompt] = useState(SCAN_TEMPLATES[0]);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -26,7 +39,7 @@ const AIAssistant: React.FC = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, generatedImages, mode, analysisResult]);
+  }, [messages, generatedImages, mode, analysisResult, isLoading]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -42,15 +55,16 @@ const AIAssistant: React.FC = () => {
     setIsLoading(false);
   };
 
-  const handleGenerateImage = async () => {
-    if (!imagePrompt.trim() || isLoading) return;
+  const handleGenerateImage = async (promptToUse?: string) => {
+    const prompt = promptToUse || imagePrompt;
+    if (!prompt.trim() || isLoading) return;
 
     setIsLoading(true);
     try {
-      const url = await gemini.generateImage(imagePrompt, imageSize);
+      const url = await gemini.generateImage(prompt, imageSize);
       if (url) {
-        setGeneratedImages(prev => [{ url, prompt: imagePrompt }, ...prev]);
-        setImagePrompt('');
+        setGeneratedImages(prev => [{ url, prompt }, ...prev]);
+        if (!promptToUse) setImagePrompt('');
       }
     } catch (err) {
       console.error("Failed to generate image:", err);
@@ -72,7 +86,7 @@ const AIAssistant: React.FC = () => {
   };
 
   const handleAnalyzeImage = async () => {
-    if (!selectedFile || !filePreview || isLoading) return;
+    if (!selectedFile || !filePreview || isLoading || !scanPrompt.trim()) return;
 
     setIsLoading(true);
     setAnalysisResult(null);
@@ -82,7 +96,7 @@ const AIAssistant: React.FC = () => {
       const result = await gemini.analyzeImage(
         base64Data,
         selectedFile.type,
-        "Analyze this document for relevance to Saudi Arabian business laws, Vision 2030, or corporate compliance. Extract key details if it's a license, ID, or contract."
+        scanPrompt
       );
       setAnalysisResult(result);
     } catch (err) {
@@ -198,7 +212,7 @@ const AIAssistant: React.FC = () => {
                    </div>
 
                    <button 
-                     onClick={handleGenerateImage}
+                     onClick={() => handleGenerateImage()}
                      disabled={isLoading || !imagePrompt.trim()}
                      className="w-full bg-[#C9A86A] text-[#0A1A2F] py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-[#b08d55] transition-all disabled:opacity-50 shadow-xl"
                    >
@@ -208,6 +222,21 @@ const AIAssistant: React.FC = () => {
 
                 <div className="space-y-4">
                    <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest px-1">Recent Masterpieces</h4>
+                   
+                   {/* Skeleton Loader */}
+                   {isLoading && (
+                     <div className="bg-white p-2 rounded-3xl border border-slate-100 shadow-sm overflow-hidden animate-pulse">
+                       <div className="w-full aspect-square bg-slate-100 rounded-2xl mb-2 flex items-center justify-center relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-[shimmer_1.5s_infinite] -translate-x-full" />
+                          <Loader2 className="animate-spin text-[#C9A86A]" size={32} />
+                       </div>
+                       <div className="p-2 space-y-2">
+                          <div className="h-2 bg-slate-100 rounded w-3/4"></div>
+                          <div className="h-2 bg-slate-100 rounded w-1/2"></div>
+                       </div>
+                     </div>
+                   )}
+
                    {generatedImages.length === 0 && !isLoading && (
                      <div className="text-center py-10 opacity-30">
                         <ImageIcon size={40} className="mx-auto mb-2" />
@@ -221,9 +250,16 @@ const AIAssistant: React.FC = () => {
                            <p className="text-[10px] text-slate-500 line-clamp-2 italic">"{img.prompt}"</p>
                         </div>
                         <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <a href={img.url} download={`SafaArban_${idx}.png`} className="p-2 bg-white/90 backdrop-blur rounded-xl shadow-lg text-[#0A1A2F] hover:bg-[#C9A86A] transition-colors">
+                           <a href={img.url} download={`SafaArban_${idx}.png`} className="p-2 bg-white/90 backdrop-blur rounded-xl shadow-lg text-[#0A1A2F] hover:bg-[#C9A86A] transition-colors" title="Download">
                               <Download size={16} />
                            </a>
+                           <button 
+                             onClick={() => handleGenerateImage(img.prompt)}
+                             className="p-2 bg-white/90 backdrop-blur rounded-xl shadow-lg text-[#0A1A2F] hover:bg-[#006C35] hover:text-white transition-colors"
+                             title="Regenerate"
+                           >
+                             <RefreshCw size={16} />
+                           </button>
                         </div>
                      </div>
                    ))}
@@ -231,14 +267,14 @@ const AIAssistant: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="bg-white p-6 rounded-3xl border border-[#006C35]/20 shadow-sm text-center">
+                <div className="bg-white p-6 rounded-3xl border border-[#006C35]/20 shadow-sm">
                    <h3 className="text-[10px] font-black text-[#006C35] uppercase tracking-[0.2em] mb-6 flex items-center justify-center gap-2">
                       <Scan size={14} /> Document Intelligence
                    </h3>
                    
                    <div 
                       onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-slate-200 rounded-3xl p-10 cursor-pointer hover:border-[#006C35]/40 hover:bg-slate-50 transition-all mb-6 group"
+                      className="border-2 border-dashed border-slate-200 rounded-3xl p-6 md:p-10 cursor-pointer hover:border-[#006C35]/40 hover:bg-slate-50 transition-all mb-6 group text-center"
                    >
                       <input 
                         type="file" 
@@ -249,10 +285,16 @@ const AIAssistant: React.FC = () => {
                       />
                       {filePreview ? (
                         <div className="relative inline-block">
-                          <img src={filePreview} alt="Preview" className="max-h-48 rounded-xl shadow-md mx-auto" />
+                          <img src={filePreview} alt="Preview" className="max-h-40 rounded-xl shadow-md mx-auto" />
                           <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                              <Upload className="text-white" size={32} />
                           </div>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setFilePreview(null); setSelectedFile(null); }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-lg hover:bg-red-600"
+                          >
+                            <X size={12} />
+                          </button>
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -264,10 +306,41 @@ const AIAssistant: React.FC = () => {
                       )}
                    </div>
 
+                   {/* Prompt Template Section */}
+                   <div className="space-y-3 mb-6">
+                      <div className="flex items-center justify-between">
+                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Analysis Prompt</label>
+                         {scanPrompt && (
+                           <button onClick={() => setScanPrompt('')} className="text-[9px] text-slate-400 hover:text-red-400 flex items-center gap-1">
+                             <Eraser size={10} /> Clear
+                           </button>
+                         )}
+                      </div>
+                      
+                      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        {SCAN_TEMPLATES.map((template, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setScanPrompt(template)}
+                            className="shrink-0 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[9px] font-bold text-slate-500 uppercase tracking-wider hover:bg-[#006C35] hover:text-white hover:border-[#006C35] transition-all"
+                          >
+                            {template.includes("dates") ? "Key Dates" : template.includes("Summary") ? "Summary" : template.includes("risks") ? "Risk Check" : template.includes("Translate") ? "Translate" : "Compliance"}
+                          </button>
+                        ))}
+                      </div>
+
+                      <textarea
+                        value={scanPrompt}
+                        onChange={(e) => setScanPrompt(e.target.value)}
+                        placeholder="What should I look for in this document?"
+                        className="w-full p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-medium outline-none focus:ring-2 focus:ring-[#006C35]/30 min-h-[80px] resize-none"
+                      />
+                   </div>
+
                    {selectedFile && (
                      <button 
                        onClick={handleAnalyzeImage}
-                       disabled={isLoading}
+                       disabled={isLoading || !scanPrompt.trim()}
                        className="w-full bg-[#006C35] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-[#005a2c] transition-all disabled:opacity-50 shadow-xl"
                      >
                        {isLoading ? <Loader2 size={18} className="animate-spin" /> : <><FileSearch size={18} /> Analyze Document</>}
@@ -281,7 +354,7 @@ const AIAssistant: React.FC = () => {
                         <Bot size={16} className="text-[#C9A86A]" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Analysis Result</span>
                      </div>
-                     <p className="text-xs leading-relaxed text-white/80 whitespace-pre-wrap">
+                     <p className="text-xs leading-relaxed text-white/80 whitespace-pre-wrap font-mono">
                         {analysisResult}
                      </p>
                   </div>
