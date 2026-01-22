@@ -1,119 +1,206 @@
 
-import React from 'react';
-import { Globe, Shield, Star, CheckCircle, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Shield, Star, CheckCircle, ArrowRight, Building2, Sun, Moon, Cloud } from 'lucide-react';
 import { Page } from '../types';
+import { BRAND } from '../constants';
 
 interface HeroProps {
   onStart: (page: Page) => void;
 }
 
 const Hero: React.FC<HeroProps> = ({ onStart }) => {
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [greeting, setGreeting] = useState('');
+  const [activeWordIndex, setActiveWordIndex] = useState(0);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  const WORDS = ["Formation", "Expansion", "Strategy", "Compliance"];
+
+  useEffect(() => {
+    // Time-based greeting
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good Morning, Visionary');
+    else if (hour < 18) setGreeting('Good Afternoon, Visionary');
+    else setGreeting('Good Evening, Visionary');
+
+    // Word Cycle
+    const interval = setInterval(() => {
+      setActiveWordIndex((prev) => (prev + 1) % WORDS.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!heroRef.current) return;
+    const { left, top, width, height } = heroRef.current.getBoundingClientRect();
+    const x = (e.clientX - left - width / 2) / 25;
+    const y = (e.clientY - top - height / 2) / 25;
+    setOffset({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setOffset({ x: 0, y: 0 });
+  };
+
   return (
-    <div className="relative bg-[#0A1A2F] text-white min-h-[95vh] flex flex-col justify-center overflow-hidden">
+    <div 
+      className="relative text-white min-h-[95vh] flex flex-col justify-center overflow-hidden perspective-[2000px]" 
+      style={{ backgroundColor: BRAND.colors.primary }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      ref={heroRef}
+    >
       {/* Dynamic Background Layer */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <img 
-          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2000&auto=format&fit=crop" 
-          alt="Modern Business Architecture" 
-          className="w-full h-full object-cover opacity-20 animate-in fade-in duration-[2000ms]"
+          src="https://images.unsplash.com/photo-1582653291655-60ae21f37968?q=80&w=2000&auto=format&fit=crop" 
+          alt="Riyadh Skyline Business (KAFD)" 
+          className="w-full h-full object-cover opacity-20 scale-110"
+          style={{ transform: `translate(${offset.x * -0.5}px, ${offset.y * -0.5}px)` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0A1A2F] via-[#0A1A2F]/90 to-[#0A1A2F]/70"></div>
+        <div className="absolute inset-0" style={{ background: `linear-gradient(to right, ${BRAND.colors.primary}, ${BRAND.colors.primary}F2, ${BRAND.colors.primary}80)` }}></div>
+        <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${BRAND.colors.primary}, transparent)` }}></div>
         
         {/* Animated Glow Effects */}
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#006C35] rounded-full blur-[160px] opacity-10 -translate-y-1/2 translate-x-1/2 animate-pulse [animation-duration:8s]"></div>
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[#F06543] rounded-full blur-[140px] opacity-10 translate-y-1/2 -translate-x-1/2 animate-pulse [animation-duration:10s]"></div>
-        
-        {/* Grid Pattern Overlay */}
-        <div className="absolute inset-0 opacity-[0.05]" style={{backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px'}}></div>
+        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full blur-[150px] opacity-20 animate-pulse [animation-duration:8s]" style={{ backgroundColor: BRAND.colors.secondary }}></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[700px] h-[700px] rounded-full blur-[180px] opacity-10 animate-pulse [animation-duration:12s]" style={{ backgroundColor: BRAND.colors.accent }}></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-        <div className="flex flex-col lg:flex-row items-center gap-12 md:gap-20">
-          <div className="lg:w-3/5 text-center lg:text-left">
-            <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-2.5 rounded-full mb-8 backdrop-blur-md hover:bg-white/10 transition-colors cursor-default">
-              <Star size={16} className="text-[#C9A86A]" fill="#C9A86A" />
-              <span className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white/90">The Elite Investment Gateway</span>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 w-full">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
+          
+          {/* Text Content */}
+          <div className="lg:w-3/5 text-center lg:text-left pt-10 lg:pt-0">
+            
+            {/* Personalized Greeting Pill */}
+            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full mb-8 backdrop-blur-md animate-in slide-in-from-top-4 fade-in duration-700">
+               {greeting.includes('Morning') ? <Sun size={14} className="text-yellow-400" /> : <Moon size={14} className="text-blue-300" />}
+               <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">{greeting}</span>
             </div>
             
-            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[1.1] mb-8 drop-shadow-2xl">
-              Your Gateway <br className="hidden sm:block" />
-              to Business <br className="hidden sm:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F06543] to-[#C9A86A]">in Saudi Arabia.</span>
+            <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.95] mb-8 drop-shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-700 delay-100 min-h-[3.5em] lg:min-h-[2.8em]">
+              Master Your <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-slate-400">Saudi Market</span> <br />
+              <span className="relative inline-block">
+                 <span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, #F2D696)` }}>
+                    {WORDS[activeWordIndex]}.
+                 </span>
+                 <span className="absolute bottom-2 left-0 w-full h-1 rounded-full opacity-50" style={{ backgroundColor: BRAND.colors.secondary }}></span>
+              </span>
             </h1>
             
-            <p className="text-sm md:text-xl lg:text-2xl text-white/70 mb-10 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
-              Expert guidance for MISA licensing, corporate formation, and government compliance. We navigate the complexities; you lead the way.
+            <p className="text-base md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed animate-in slide-in-from-bottom-12 fade-in duration-700 delay-200">
+              SafaArban provides the digital infrastructure and legal expertise for 100% foreign ownership. Launch your Regional HQ in Riyadh with confidence.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center lg:justify-start">
+            <div className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start animate-in slide-in-from-bottom-16 fade-in duration-700 delay-300">
               <button 
                 onClick={() => onStart('services')}
-                className="bg-[#F06543] hover:bg-white hover:text-[#0A1A2F] text-white px-8 md:px-12 py-4 md:py-5 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest transition-all shadow-2xl shadow-[#F06543]/20 flex items-center justify-center gap-3 group"
+                className="hover:bg-white hover:text-[#051C2C] text-[#051C2C] px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 group relative overflow-hidden"
+                style={{ backgroundColor: BRAND.colors.secondary, boxShadow: `0 0 40px -10px ${BRAND.colors.secondary}66` }}
               >
-                Start Your Business <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                <span className="relative z-10 flex items-center gap-2">Start Setup <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></span>
+                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
               </button>
               <button 
-                onClick={() => onStart('services')}
-                className="bg-transparent border border-white/20 hover:border-white hover:bg-white/5 px-8 md:px-12 py-4 md:py-5 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 text-white/80 hover:text-white"
+                onClick={() => onStart('contact')}
+                className="bg-transparent border border-white/10 hover:border-white/30 hover:bg-white/5 px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 text-white backdrop-blur-sm"
               >
-                Explore Services
+                Book Consultation
               </button>
             </div>
 
-            {/* Trust Badges */}
-            <div className="mt-12 md:mt-20 flex flex-wrap justify-center lg:justify-start gap-3 md:gap-6 opacity-80">
-              <div className="flex items-center gap-2 md:gap-3 bg-white/5 px-3 md:px-4 py-2 rounded-full border border-white/5">
-                <CheckCircle size={14} className="text-[#006C35] shrink-0" />
-                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest">100% Ownership</span>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3 bg-white/5 px-3 md:px-4 py-2 rounded-full border border-white/5">
-                <CheckCircle size={14} className="text-[#006C35] shrink-0" />
-                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest">Official Liaison</span>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3 bg-white/5 px-3 md:px-4 py-2 rounded-full border border-white/5">
-                <CheckCircle size={14} className="text-[#006C35] shrink-0" />
-                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest">Elite Support</span>
+            {/* Trust Indicators */}
+            <div className="mt-16 pt-8 border-t border-white/5 flex flex-wrap justify-center lg:justify-start gap-x-8 gap-y-4 animate-in fade-in duration-1000 delay-500">
+              {[
+                "MISA Licensed",
+                "Vision 2030 Aligned",
+                "24h Fast-Track",
+                "Bank Integration"
+              ].map((feature, i) => (
+                <div key={i} className="flex items-center gap-2 group cursor-default">
+                   <div className="p-1 rounded-full bg-white/5 group-hover:bg-[#006C35] transition-colors">
+                      <CheckCircle size={12} className="text-white" />
+                   </div>
+                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-white transition-colors">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3D Visual Element */}
+          <div className="lg:w-2/5 hidden lg:block relative z-10">
+            <div 
+              className="relative transition-transform duration-100 ease-out will-change-transform"
+              style={{ transform: `rotateY(${offset.x}deg) rotateX(${-offset.y}deg)` }}
+            >
+              {/* Glow Behind */}
+              <div className="absolute inset-0 rounded-[3rem] blur-[60px] opacity-30" style={{ background: `linear-gradient(to top right, ${BRAND.colors.secondary}, ${BRAND.colors.accent})` }}></div>
+              
+              {/* Main Card */}
+              <div className="relative backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 shadow-2xl overflow-hidden" style={{ backgroundColor: `${BRAND.colors.primary}CC` }}>
+                 {/* Reflection */}
+                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-50 pointer-events-none"></div>
+
+                 <div className="absolute top-0 right-0 p-10 opacity-5">
+                    <Building2 size={200} className="text-white" />
+                 </div>
+
+                 <div className="relative z-10 space-y-10">
+                    <div className="flex justify-between items-start">
+                       <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg border relative overflow-hidden" style={{ background: `linear-gradient(to bottom right, ${BRAND.colors.accent}, #004d26)`, borderColor: `${BRAND.colors.accent}4D` }}>
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                          <Shield size={32} className="text-white relative z-10" />
+                       </div>
+                       <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">License Status</p>
+                          <div className="flex items-center gap-2 justify-end mt-1">
+                             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></span>
+                             <span className="text-sm font-black text-white">Active</span>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div>
+                       <h3 className="text-3xl font-black text-white leading-tight mb-2">Foreign Investment <br/> License</h3>
+                       <div className="flex items-center gap-2">
+                          <Star size={12} style={{ color: BRAND.colors.secondary, fill: BRAND.colors.secondary }} />
+                          <p className="text-sm text-slate-400 font-medium">100% Ownership Approved</p>
+                       </div>
+                    </div>
+
+                    <div className="bg-white/5 rounded-2xl p-5 border border-white/5 space-y-4 backdrop-blur-sm">
+                       <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-bold">Processing</span>
+                          <span className="text-white font-mono">Stage 3 of 4</span>
+                       </div>
+                       <div className="w-full bg-black/40 h-1.5 rounded-full overflow-hidden">
+                          <div className="h-full w-[75%] relative overflow-hidden" style={{ backgroundColor: BRAND.colors.secondary }}>
+                             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_1.5s_infinite]"></div>
+                          </div>
+                       </div>
+                       <div className="flex justify-between items-center text-[10px] uppercase tracking-wider font-bold">
+                          <span style={{ color: BRAND.colors.secondary }}>Est. Completion</span>
+                          <span className="text-white">24 Hours</span>
+                       </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                       <div className="flex-1 bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                          <p className="text-[9px] text-slate-400 uppercase font-bold">Capital</p>
+                          <p className="text-white font-bold text-sm">Not Required</p>
+                       </div>
+                       <div className="flex-1 bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                          <p className="text-[9px] text-slate-400 uppercase font-bold">Sponsor</p>
+                          <p className="text-white font-bold text-sm">None</p>
+                       </div>
+                    </div>
+                 </div>
               </div>
             </div>
           </div>
 
-          <div className="lg:w-2/5 hidden lg:block relative">
-            <div className="relative group perspective-[2000px]">
-              <div className="absolute inset-0 bg-[#C9A86A] rounded-[4rem] blur-[80px] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-              <div className="relative bg-[#132B4C]/90 border border-white/10 aspect-[4/5] rounded-[4rem] overflow-hidden p-12 flex flex-col justify-between shadow-2xl backdrop-blur-xl transform transition-transform duration-700 hover:rotate-y-12 hover:scale-[1.02]">
-                 <div className="flex justify-between items-start">
-                    <div className="w-16 h-16 bg-[#006C35] rounded-3xl flex items-center justify-center shadow-lg border border-[#006C35]/20">
-                        <Shield size={32} className="text-[#C9A86A]" />
-                    </div>
-                    <div className="text-right">
-                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Market Entry</p>
-                        <p className="text-sm font-black text-[#C9A86A]">HQ Riyadh</p>
-                    </div>
-                 </div>
-                 
-                 <div className="space-y-6">
-                    <div className="h-px bg-white/10 w-full"></div>
-                    <p className="text-4xl font-black tracking-tighter leading-none">Establishing <br/> Your Future.</p>
-                    <div className="flex gap-3">
-                        <div className="h-2 w-12 bg-[#F06543] rounded-full shadow-[0_0_10px_#F06543]"></div>
-                        <div className="h-2 w-4 bg-white/10 rounded-full"></div>
-                        <div className="h-2 w-4 bg-white/10 rounded-full"></div>
-                    </div>
-                 </div>
-
-                 <div className="bg-[#0A1A2F]/80 backdrop-blur-md p-6 rounded-3xl border border-white/10 hover:bg-[#0A1A2F] transition-colors">
-                    <p className="text-[11px] font-bold text-[#C9A86A] uppercase mb-2">Compliance Status</p>
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">Vision 2030 Ready</span>
-                        <span className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                          Optimized
-                        </span>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

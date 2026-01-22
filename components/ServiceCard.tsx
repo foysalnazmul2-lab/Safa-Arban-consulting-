@@ -1,123 +1,281 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Plus, 
   Check, 
   Building2, 
   Globe, 
-  Info,
-  ArrowRight,
   Briefcase,
-  Layout
+  ShieldCheck,
+  Factory,
+  HardHat,
+  Stethoscope,
+  Truck,
+  Utensils,
+  Wifi,
+  Eye,
+  Crown,
+  Zap,
+  Scale,
+  Landmark,
+  Leaf,
+  Video,
+  Pickaxe,
+  GraduationCap,
+  Target,
+  Megaphone,
+  Search,
+  Settings,
+  Users,
+  LineChart,
+  ArrowRight
 } from 'lucide-react';
 import { Service } from '../types';
+import { BRAND } from '../constants';
 
 interface ServiceCardProps {
   service: Service;
   isInCart: boolean;
   onToggle: () => void;
   onViewDetails: () => void;
+  currency?: 'SAR' | 'USD';
 }
 
-const getCategoryStyles = (category: string, isActive: boolean) => {
-  if (category.includes('Investment') || category.includes('Foreign') || category.includes('MISA') || category.includes('Elite')) {
-    return {
-      icon: <Globe size={20} />,
-      bgColor: isActive ? 'bg-[#C9A86A]' : 'bg-[#C9A86A]/10',
-      textColor: isActive ? 'text-white' : 'text-[#C9A86A]',
-      label: 'Investment'
-    };
-  }
-  if (category.includes('Commerce') || category.includes('Formation') || category.includes('Registration')) {
-    return {
-      icon: <Building2 size={20} />,
-      bgColor: isActive ? 'bg-[#006C35]' : 'bg-[#006C35]/10',
-      textColor: isActive ? 'text-white' : 'text-[#006C35]',
-      label: 'Setup'
-    };
-  }
-  if (category.includes('Qiwa') || category.includes('HR') || category.includes('Manpower')) {
-    return {
-      icon: <Briefcase size={20} />,
-      bgColor: isActive ? 'bg-[#F06543]' : 'bg-[#F06543]/10',
-      textColor: isActive ? 'text-white' : 'text-[#F06543]',
-      label: 'HR & Labor'
-    };
-  }
+export const getCategoryStyles = (category: string, name: string) => {
+  const lowerName = name.toLowerCase();
+  const lowerCat = category.toLowerCase();
+
+  // --- Specialized Consulting & Advisory ---
+  if (lowerCat.includes('strategy') || lowerName.includes('strategy')) 
+    return { icon: <Target size={24} />, label: 'Strategy', color: '#B91C1C', bg: '#FEF2F2' }; // Red
+
+  if (lowerCat.includes('financial') || lowerName.includes('tax') || lowerName.includes('audit'))
+    return { icon: <Landmark size={24} />, label: 'Finance', color: '#059669', bg: '#ECFDF5' }; // Emerald
+
+  if (lowerCat.includes('human') || lowerCat.includes('hr') || lowerName.includes('recruitment'))
+    return { icon: <Users size={24} />, label: 'HR', color: '#DB2777', bg: '#FDF2F8' }; // Pink
+
+  if (lowerCat.includes('digital') || lowerName.includes('it consulting') || lowerName.includes('cyber'))
+    return { icon: <Wifi size={24} />, label: 'Digital', color: '#7C3AED', bg: '#F5F3FF' }; // Violet
+
+  if (lowerCat.includes('marketing') || lowerName.includes('brand'))
+    return { icon: <Megaphone size={24} />, label: 'Marketing', color: '#D946EF', bg: '#FDF4FF' }; // Fuchsia
+
+  if (lowerCat.includes('research') || lowerName.includes('feasibility'))
+    return { icon: <Search size={24} />, label: 'Research', color: '#0EA5E9', bg: '#F0F9FF' }; // Sky
+
+  if (lowerCat.includes('legal') || lowerName.includes('contract') || lowerName.includes('governance'))
+    return { icon: <Scale size={24} />, label: 'Legal', color: '#475569', bg: '#F8FAFC' }; // Slate
+
+  if (lowerCat.includes('operational') || lowerName.includes('process') || lowerName.includes('supply chain'))
+    return { icon: <Settings size={24} />, label: 'Ops', color: '#D97706', bg: '#FFFBEB' }; // Amber
+
+  // --- Specific Sectors ---
+  if (lowerName.includes('industrial') || lowerName.includes('manufacturing') || lowerName.includes('mining')) 
+    return { icon: <Factory size={24} />, label: 'Industry', color: '#EA580C', bg: '#FFF7ED' };
+
+  if (lowerName.includes('contracting') || lowerName.includes('construction') || lowerName.includes('engineering')) 
+    return { icon: <HardHat size={24} />, label: 'Construction', color: '#C2410C', bg: '#FFEDD5' };
+
+  if (lowerName.includes('health') || lowerName.includes('medical')) 
+    return { icon: <Stethoscope size={24} />, label: 'Healthcare', color: '#EF4444', bg: '#FEF2F2' };
+
+  if (lowerName.includes('logistics') || lowerName.includes('transport')) 
+    return { icon: <Truck size={24} />, label: 'Logistics', color: '#2563EB', bg: '#EFF6FF' };
+
+  if (lowerName.includes('food') || lowerName.includes('restaurant')) 
+    return { icon: <Utensils size={24} />, label: 'F&B', color: '#65A30D', bg: '#ECFCCB' };
+
+  if (lowerName.includes('media') || lowerName.includes('advertising'))
+    return { icon: <Video size={24} />, label: 'Media', color: '#9333EA', bg: '#F3E8FF' };
+
+  if (lowerName.includes('real estate') || lowerName.includes('developer'))
+    return { icon: <Building2 size={24} />, label: 'Real Estate', color: '#334155', bg: '#F1F5F9' };
+
+  // --- Core Categories ---
+  if (lowerCat.includes('formation') || lowerCat.includes('registration')) 
+    return { icon: <Globe size={24} />, label: 'Formation', color: BRAND.colors.primary, bg: '#F1F5F9' };
   
-  return {
-    icon: <Layout size={20} />,
-    bgColor: isActive ? 'bg-[#0A1A2F]' : 'bg-slate-100',
-    textColor: isActive ? 'text-white' : 'text-slate-600',
-    label: 'Support'
-  };
+  if (lowerCat.includes('manpower') || lowerCat.includes('immigration')) 
+    return { icon: <Briefcase size={24} />, label: 'Visas', color: '#0D9488', bg: '#F0FDFA' };
+  
+  if (lowerCat.includes('support') || lowerCat.includes('bpo')) 
+    return { icon: <Zap size={24} />, label: 'Support', color: '#0891B2', bg: '#ECFEFF' };
+
+  // Default
+  return { icon: <ShieldCheck size={24} />, label: 'Service', color: '#64748B', bg: '#F8FAFC' };
 };
 
-const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, onViewDetails }) => {
-  const styles = getCategoryStyles(service.category, isInCart);
+const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, onViewDetails, currency = 'SAR' }) => {
+  const [isVip, setIsVip] = useState(false);
+  const styles = getCategoryStyles(service.category, service.name);
+  const viewCount = React.useMemo(() => Math.floor(Math.random() * 40) + 5, []);
+
+  // Conversion Logic
+  const RATE = currency === 'USD' ? 0.2666 : 1;
+  const basePrice = service.professionalFee;
+  const vipMarkup = isVip ? 1.5 : 1;
+  
+  const finalPrice = Math.floor(basePrice * vipMarkup * RATE);
+  const govPrice = Math.floor(service.governmentFee * RATE);
 
   return (
-    <div className={`bg-white p-8 rounded-[3rem] border transition-all duration-500 flex flex-col justify-between group h-full ${
-      isInCart 
-      ? 'border-[#C9A86A] ring-8 ring-[#C9A86A]/5 shadow-2xl scale-[1.02]' 
-      : 'border-slate-100 hover:border-slate-300 hover:shadow-xl'
-    }`}>
-      <div>
-        <div className="flex justify-between items-start mb-8">
-          <div className={`p-5 rounded-2xl transition-all duration-300 ${styles.bgColor} ${styles.textColor} shadow-sm group-hover:scale-110 transform`}>
+    <div 
+      className={`relative flex flex-col justify-between h-full transition-all duration-500 rounded-[2.5rem] overflow-hidden group border ${
+        isVip 
+          ? 'shadow-[0_0_30px_rgba(212,175,55,0.2)]' 
+          : `hover:border-slate-300 hover:shadow-xl`
+      }`}
+      style={{
+        backgroundColor: isVip ? BRAND.colors.primary : 'white',
+        borderColor: isVip ? BRAND.colors.secondary : isInCart ? BRAND.colors.primary : '#F1F5F9'
+      }}
+    >
+      
+      {/* Background Effects for VIP */}
+      {isVip && (
+        <>
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-10 pointer-events-none" style={{ backgroundColor: BRAND.colors.secondary }}></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-[80px] opacity-10 pointer-events-none" style={{ backgroundColor: BRAND.colors.alert }}></div>
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+        </>
+      )}
+
+      {/* Header Badge */}
+      {isInCart && (
+        <div className="absolute top-0 left-0 px-6 py-2 rounded-br-2xl text-[10px] font-black uppercase tracking-widest z-20 text-white"
+             style={{ backgroundColor: isVip ? BRAND.colors.secondary : BRAND.colors.primary, color: isVip ? BRAND.colors.primary : 'white' }}>
+           <Check size={12} className="inline mr-1" /> Added
+        </div>
+      )}
+
+      {/* Hero Image if available */}
+      {service.image && (
+         <div className="h-48 w-full relative overflow-hidden cursor-pointer" onClick={onViewDetails}>
+            <img src={service.image} alt={service.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-20"></div>
+         </div>
+      )}
+
+      <div className={`relative z-10 flex flex-col flex-grow ${service.image ? 'p-6' : 'p-8'}`}>
+        {/* Top Controls */}
+        <div className="flex justify-between items-start mb-6">
+          <div className={`p-4 rounded-2xl transition-all duration-300 cursor-pointer hover:scale-105`}
+               onClick={onViewDetails}
+               style={{ 
+                 backgroundColor: isVip ? BRAND.colors.secondary : styles.bg,
+                 color: isVip ? BRAND.colors.primary : styles.color
+               }}>
             {styles.icon}
           </div>
-          <div className="text-right">
-            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${isInCart ? 'text-[#C9A86A]' : 'text-slate-400'}`}>
-              Service Fee
-            </p>
-            <div className="flex flex-col items-end">
-              <div className="flex items-baseline justify-end gap-1">
-                <span className="text-3xl font-black text-[#0F2847] font-mono tracking-tighter">
-                  {service.professionalFee.toLocaleString()}
-                </span>
-                <span className="text-[10px] font-bold text-slate-300">SAR</span>
-              </div>
-              {service.governmentFee > 0 && (
-                <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full mt-1">
-                  + Gov Fees (Est.)
-                </span>
-              )}
-            </div>
+          
+          {/* VIP Toggle Switch */}
+          <div className="flex flex-col items-end gap-2">
+             <div 
+               onClick={(e) => { e.stopPropagation(); setIsVip(!isVip); }}
+               className={`cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all hover:bg-slate-50`}
+               style={{ 
+                 backgroundColor: isVip ? BRAND.colors.primary : 'white',
+                 borderColor: isVip ? BRAND.colors.secondary : '#E2E8F0',
+                 color: isVip ? BRAND.colors.secondary : '#94A3B8'
+               }}
+             >
+                <div className={`w-3 h-3 rounded-full transition-colors ${isVip ? 'animate-pulse' : ''}`}
+                     style={{ backgroundColor: isVip ? BRAND.colors.secondary : '#CBD5E1' }}></div>
+                <span className="text-[9px] font-black uppercase tracking-widest">VIP Protocol</span>
+             </div>
+             {isVip && <span className="text-[9px] font-bold animate-in fade-in" style={{ color: BRAND.colors.secondary }}>+ Priority Processing</span>}
           </div>
         </div>
-        
-        <h3 className="text-xl font-black text-[#0A1A2F] mb-4 leading-tight group-hover:text-[#C9A86A] transition-colors">
+
+        {/* Labels */}
+        <div className="mb-4 flex items-center justify-between">
+           <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md transition-colors`}
+                 style={{ backgroundColor: isVip ? 'rgba(255,255,255,0.1)' : styles.bg, color: isVip ? 'rgba(255,255,255,0.7)' : styles.color }}>
+             {styles.label}
+           </span>
+           <span className="flex items-center gap-1 text-[9px] font-bold" style={{ color: isVip ? BRAND.colors.secondary : '#94A3B8' }}>
+             <Eye size={10} /> {viewCount} viewing
+           </span>
+        </div>
+
+        {/* Title & Price */}
+        <h3 
+          onClick={onViewDetails}
+          className="text-lg font-black mb-4 leading-tight cursor-pointer min-h-[3.5rem] transition-colors"
+          style={{ color: isVip ? 'white' : BRAND.colors.primary }}
+          onMouseOver={(e) => { if (!isVip) e.currentTarget.style.color = BRAND.colors.accent }}
+          onMouseOut={(e) => { if (!isVip) e.currentTarget.style.color = BRAND.colors.primary }}
+        >
           {service.name}
         </h3>
 
-        <p className="text-sm text-slate-500 line-clamp-2 mb-6 leading-relaxed">
-          {service.desc}
-        </p>
+        <div className="mb-6">
+           <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: isVip ? BRAND.colors.secondary : '#94A3B8' }}>
+             {isVip ? 'VIP Package Fee' : 'Professional Fee'}
+           </p>
+           <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-black font-mono tracking-tighter" style={{ color: isVip ? 'white' : BRAND.colors.primary }}>
+                {currency === 'USD' ? '$' : ''}{finalPrice.toLocaleString()}
+              </span>
+              <span className={`text-[9px] font-bold ${isVip ? 'text-white/50' : 'text-slate-400'}`}>{currency}</span>
+           </div>
+        </div>
 
-        <button 
-          onClick={onViewDetails}
-          className="group/btn flex items-center gap-2 text-[#C9A86A] hover:text-[#0A1A2F] text-[11px] font-black uppercase tracking-widest transition-all py-2"
-        >
-          <Info size={16} /> View Details & Inclusions <ArrowRight size={14} className="opacity-0 -translate-x-2 group-hover/btn:opacity-100 group-hover/btn:translate-x-0 transition-all" />
-        </button>
+        {/* Features Preview */}
+        <div className="space-y-2 mb-6 flex-grow">
+           {isVip ? (
+             <>
+               <div className="flex items-center gap-2 text-xs font-bold" style={{ color: BRAND.colors.secondary }}><Crown size={12} /> Dedicated Senior PRO</div>
+               <div className="flex items-center gap-2 text-xs font-bold" style={{ color: BRAND.colors.secondary }}><Zap size={12} /> 24h Express Processing</div>
+               <div className="flex items-center gap-2 text-xs font-bold" style={{ color: BRAND.colors.secondary }}><ShieldCheck size={12} /> Compliance Guarantee</div>
+             </>
+           ) : (
+             <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed font-medium">
+               {service.desc}
+             </p>
+           )}
+        </div>
+
+        {/* Learn More Link */}
+        <div className="mt-auto mb-6">
+           <button 
+             onClick={onViewDetails}
+             className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:underline transition-all ${isVip ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:text-[#051C2C]'}`}
+           >
+             Learn More <ArrowRight size={12} />
+           </button>
+        </div>
       </div>
 
-      <div className="mt-8 pt-8 border-t border-slate-50">
+      {/* Action Area */}
+      <div className={`p-6 border-t relative z-10 ${isVip ? 'border-white/10 bg-white/5' : 'border-slate-50 bg-[#F8F9FA]/50'}`}>
         <button 
-          onClick={onToggle}
-          className={`w-full py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95 ${
-            isInCart 
-            ? 'bg-[#C9A86A]/10 text-[#C9A86A] border border-[#C9A86A]/20' 
-            : 'bg-[#0A1A2F] text-white hover:bg-[#C9A86A] shadow-lg shadow-[#0A1A2F]/10'
-          }`}
+          onClick={() => onToggle()}
+          className="w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg"
+          style={{
+            backgroundColor: isVip 
+              ? BRAND.colors.secondary 
+              : isInCart ? BRAND.colors.accent : BRAND.colors.primary,
+            color: isVip ? BRAND.colors.primary : 'white',
+            backgroundImage: isVip ? `linear-gradient(to right, ${BRAND.colors.secondary}, #F2D696)` : 'none'
+          }}
         >
           {isInCart ? (
-            <><Check size={18} /> Selected</>
+            <><Check size={16} /> Selected</>
           ) : (
-            <><Plus size={18} /> Add to Quote</>
+            <><Plus size={16} /> {isVip ? 'Add VIP Bundle' : 'Add to Quote'}</>
           )}
         </button>
+        {service.governmentFee > 0 ? (
+           <p className={`text-[9px] text-center font-bold mt-3 uppercase tracking-wider ${isVip ? 'text-white/30' : 'text-slate-400'}`}>
+             + ~{currency === 'USD' ? '$' : ''}{govPrice.toLocaleString()} {currency} Govt Fees
+           </p>
+        ) : (
+           <p className={`text-[9px] text-center font-bold mt-3 uppercase tracking-wider ${isVip ? 'text-white/30' : 'text-slate-400'}`}>
+             Govt. Fees: N/A (Consulting)
+           </p>
+        )}
       </div>
     </div>
   );

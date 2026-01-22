@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Quotation from './components/Quotation';
 import AIAssistant from './components/AIAssistant';
@@ -17,10 +17,8 @@ import SEO from './components/SEO';
 import LiveNotifications from './components/LiveNotifications';
 import ExitIntentModal from './components/ExitIntentModal';
 import TrackApplication from './components/TrackApplication';
-import ClientPortal from './components/ClientPortal';
-import Login from './components/Login';
-import { Page, CartItem, CorePageContent, User } from './types';
-import { SERVICES_DB, CORE_SERVICES_CONTENT, BRAND, BLOG_POSTS } from './constants';
+import { Page, CartItem, CorePageContent } from './types';
+import { SERVICES_DB, CORE_SERVICES_CONTENT, BRAND } from './constants';
 import { CheckCircle } from 'lucide-react';
 
 const CATEGORY_IMAGES: Record<string, string> = {
@@ -42,9 +40,6 @@ const App: React.FC = () => {
   const [isServicesLoading, setIsServicesLoading] = useState(false);
   const [isTrackerOpen, setIsTrackerOpen] = useState(false);
   const [currency, setCurrency] = useState<'SAR' | 'USD'>('SAR');
-  
-  // Auth State
-  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     // Generate a sequential invoice number if not set
@@ -70,24 +65,6 @@ const App: React.FC = () => {
     }
   }, [activePage, activeServiceSlug, orderId]);
 
-  // --- Dynamic SEO Aggregation ---
-  const dynamicKeywords = useMemo(() => {
-    const serviceKeywords = SERVICES_DB.map(s => s.name).slice(0, 12); // Top 12 Service Names
-    const blogTags = Array.from(new Set(BLOG_POSTS.flatMap(p => p.tags))).slice(0, 10); // Unique Blog Tags
-    
-    return [
-      "SafaArban", 
-      "Business Setup Saudi Arabia", 
-      "Company Formation Saudi Arabia", 
-      "MISA License", 
-      "Investor Visa", 
-      "Riyadh Business", 
-      "Vision 2030 Investment",
-      ...serviceKeywords,
-      ...blogTags
-    ];
-  }, []);
-
   const toggleCartItem = (serviceId: string) => {
     setCart(prev => {
       const isAdding = !prev.includes(serviceId);
@@ -106,23 +83,6 @@ const App: React.FC = () => {
     setActiveServiceSlug(slug);
     setActivePage('service-details');
     window.scrollTo(0, 0);
-  };
-
-  const handleLogin = (email: string) => {
-    // Mock Login
-    setUser({
-        id: 'CL-8821',
-        name: 'Alex Morgan',
-        email: email,
-        role: 'client',
-        company: 'TechFlow Solutions'
-    });
-    setActivePage('client-portal');
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    setActivePage('home');
   };
 
   const getServiceContent = (slug: string): CorePageContent | null => {
@@ -151,10 +111,7 @@ const App: React.FC = () => {
             desc: `Approx. ${service.governmentFee.toLocaleString()} SAR payable directly to authorities.`
           }
         ],
-        cta: "Add to Quote",
-        requirements: service.requirements,
-        exclusions: service.exclusions,
-        details: service.details
+        cta: "Add to Quote"
       };
     }
 
@@ -175,23 +132,6 @@ const App: React.FC = () => {
   const currentServiceContent = activeServiceSlug ? getServiceContent(activeServiceSlug) : null;
   const isCurrentServiceInCart = activeServiceSlug && cart.includes(activeServiceSlug);
 
-  // If user is not logged in but tries to access portal, redirect to login
-  if (activePage === 'client-portal' && !user) {
-      setActivePage('login');
-  }
-
-  // Handle Full Page Login View
-  if (activePage === 'login') {
-      return <Login onLogin={handleLogin} onBack={() => setActivePage('home')} />;
-  }
-
-  // Handle Full Page Client Portal View
-  if (activePage === 'client-portal' && user) {
-      return <ClientPortal user={user} onLogout={handleLogout} />;
-  }
-
-  const isFullScreenPage = activePage === 'quotation' || activePage === 'payment-auth' || activePage === 'service-details';
-
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col" style={{ color: BRAND.colors.primary }}>
       {/* Dynamic SEO Injection based on Active Page */}
@@ -199,15 +139,13 @@ const App: React.FC = () => {
         <SEO 
           title="Company Formation in Saudi Arabia | MISA License & CR – SafaArban"
           description="Set up your company in Saudi Arabia with SafaArban. MISA licenses, 100% foreign ownership, CR registration, visas & compliance. Riyadh-based experts."
-          keywords={dynamicKeywords}
+          keywords={["SafaArban", "Business Setup Saudi Arabia", "Company Formation Saudi Arabia", "MISA License Saudi Arabia", "100% Foreign Ownership Saudi Arabia"]}
           schema={{
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
             "name": BRAND.name,
             "description": "Premium Gateway for Saudi Business Setup",
-            "address": BRAND.contact.address,
-            "telephone": BRAND.contact.phone,
-            "priceRange": "$$$"
+            "address": BRAND.contact.address
           }}
         />
       )}
@@ -215,14 +153,14 @@ const App: React.FC = () => {
         <SEO 
           title="MISA License Saudi Arabia | 100% Foreign Ownership – SafaArban"
           description="Get your MISA investment license, Commercial Registration (CR), and Investor Visa in Saudi Arabia. Transparent professional fees for business setup."
-          keywords={["MISA License Cost", "Commercial Registration Saudi Arabia", "ZATCA Registration", "Iqama Issuance", ...SERVICES_DB.map(s => s.name).slice(0, 5)]}
+          keywords={["MISA License Cost", "Commercial Registration Saudi Arabia", "ZATCA Registration", "Iqama Issuance"]}
         />
       )}
       {activePage === 'blog' && (
         <SEO 
           title="Business Setup Guides & Market Insights | SafaArban"
           description="Expert articles on Saudi market regulations, Vision 2030 updates, taxation, and HR compliance laws."
-          keywords={["Saudi market insights", "Vision 2030 blog", "Saudi tax guide", "MISA updates", ...BLOG_POSTS.flatMap(p => p.tags).slice(0, 8)]}
+          keywords={["Saudi market insights", "Vision 2030 blog", "Saudi tax guide", "MISA updates"]}
           type="article"
         />
       )}
@@ -238,17 +176,16 @@ const App: React.FC = () => {
           title={`${currentServiceContent.title} | SafaArban`}
           description={currentServiceContent.overview.substring(0, 160)}
           image={currentServiceContent.heroImage}
-          keywords={[currentServiceContent.title, currentServiceContent.subtitle, "Saudi Business Services"]}
           type="service"
         />
       )}
 
-      {!isFullScreenPage && (
+      {activePage !== 'quotation' && activePage !== 'payment-auth' && activePage !== 'service-details' && (
         <Navbar 
           activePage={activePage} 
           setActivePage={setActivePage} 
           cartCount={cart.length} 
-          onOpenTracker={() => setActivePage('login')} // Use Login instead of popup tracker for main nav
+          onOpenTracker={() => setIsTrackerOpen(true)}
           currency={currency}
           onToggleCurrency={() => setCurrency(currency === 'SAR' ? 'USD' : 'SAR')}
         />
@@ -259,7 +196,7 @@ const App: React.FC = () => {
           activePage='services'
           setActivePage={setActivePage} 
           cartCount={cart.length} 
-          onOpenTracker={() => setActivePage('login')}
+          onOpenTracker={() => setIsTrackerOpen(true)}
           currency={currency}
           onToggleCurrency={() => setCurrency(currency === 'SAR' ? 'USD' : 'SAR')}
         />
@@ -327,7 +264,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {!isFullScreenPage && (
+      {activePage !== 'quotation' && activePage !== 'payment-auth' && activePage !== 'service-details' && (
          <Footer 
            setActivePage={setActivePage} 
            onServiceClick={navigateToServiceDetail} 

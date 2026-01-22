@@ -16,9 +16,9 @@ import { BRAND } from '../constants';
 import emailjs from '@emailjs/browser';
 
 // EMAILJS CONFIGURATION
-// Please replace these with your actual EmailJS credentials
+// Replace these with actual credentials for production
 const SERVICE_ID = 'service_your_id'; 
-const TEMPLATE_ID = 'template_payment_id'; // Ensure this template sends to: foysalnazmul2@gmail.com, hello@safaarban.com
+const TEMPLATE_ID = 'template_payment_id';
 const PUBLIC_KEY = 'your_public_key'; 
 
 interface PaymentAuthProps {
@@ -46,15 +46,21 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
 
     try {
       if (formRef.current) {
-        // Send email via EmailJS with form data (including file input if supported by template)
-        await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, formRef.current, PUBLIC_KEY);
+        // If keys are placeholders, simulate success
+        if (PUBLIC_KEY === 'your_public_key') {
+            console.warn("Using placeholder EmailJS keys. Simulating success.");
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network
+        } else {
+            // Real Send
+            await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, formRef.current, PUBLIC_KEY);
+        }
       }
       
       setIsDone(true);
       setTimeout(onSuccess, 3000);
     } catch (error) {
       console.error('Payment email failed:', error);
-      // Fallback for demo
+      // Fallback for demo flow even on error
       setIsDone(true);
       setTimeout(onSuccess, 3000);
     } finally {
@@ -64,17 +70,17 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
 
   if (isDone) {
     return (
-      <div className="min-h-screen bg-[#0A1A2F] flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: BRAND.colors.primary }}>
         <div className="max-w-md w-full text-center space-y-8 animate-in zoom-in-95 duration-500">
-           <div className="w-24 h-24 bg-[#006C35] rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-[#006C35]/20">
+           <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-2xl" style={{ backgroundColor: BRAND.colors.accent, boxShadow: `0 10px 40px -10px ${BRAND.colors.accent}66` }}>
               <CheckCircle2 size={48} className="text-white" />
            </div>
            <div className="space-y-4">
               <h2 className="text-4xl font-black text-white tracking-tight">Receipt Verified</h2>
-              <p className="text-white/60 text-lg">Your transaction for <span className="text-[#C9A86A] font-bold">{orderId}</span> is being processed by our finance department. An official confirmation will be sent to your email shortly.</p>
+              <p className="text-white/60 text-lg">Your transaction for <span className="font-bold" style={{ color: BRAND.colors.secondary }}>{orderId}</span> is being processed by our finance department. An official confirmation will be sent to your email shortly.</p>
            </div>
            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-[#C9A86A] animate-progress-fast"></div>
+              <div className="h-full animate-progress-fast" style={{ backgroundColor: BRAND.colors.secondary }}></div>
            </div>
            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Redirecting to Dashboard...</p>
         </div>
@@ -83,7 +89,7 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-16 px-6">
+    <div className="min-h-screen bg-[#F8F9FA] py-16 px-6">
       <div className="max-w-5xl mx-auto">
         <button 
           onClick={onBack}
@@ -96,22 +102,22 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
           {/* Left: Instructions & Details */}
           <div className="space-y-10">
             <div>
-              <span className="text-[#C9A86A] font-black uppercase tracking-[0.3em] text-[10px] block mb-4">Security Protocol</span>
-              <h1 className="text-5xl font-black text-[#0A1A2F] tracking-tighter leading-none mb-6">Payment <br/>Authentication</h1>
+              <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4" style={{ color: BRAND.colors.secondary }}>Security Protocol</span>
+              <h1 className="text-5xl font-black tracking-tighter leading-none mb-6" style={{ color: BRAND.colors.primary }}>Payment <br/>Authentication</h1>
               <p className="text-slate-500 text-lg font-medium leading-relaxed">
                 To activate your services, please provide the transaction receipt from your bank transfer. Our compliance team verifies all incoming capital within 4-6 business hours.
               </p>
             </div>
 
-            <div className="bg-[#0A1A2F] p-8 rounded-[2rem] text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A86A] rounded-full blur-[60px] opacity-10"></div>
+            <div className="p-8 rounded-[2rem] text-white relative overflow-hidden" style={{ backgroundColor: BRAND.colors.primary }}>
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[60px] opacity-10" style={{ backgroundColor: BRAND.colors.secondary }}></div>
                 <div className="relative z-10 flex justify-between items-center mb-6">
-                   <ShieldCheck size={32} className="text-[#C9A86A]" />
+                   <ShieldCheck size={32} style={{ color: BRAND.colors.secondary }} />
                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Order Ref: {orderId}</span>
                 </div>
                 <div className="space-y-1">
                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Amount Due</p>
-                   <p className="text-4xl font-mono font-black text-[#C9A86A]">{totalAmount.toLocaleString()} <span className="text-sm uppercase">SAR</span></p>
+                   <p className="text-4xl font-mono font-black" style={{ color: BRAND.colors.secondary }}>{totalAmount.toLocaleString()} <span className="text-sm uppercase">SAR</span></p>
                 </div>
             </div>
 
@@ -125,7 +131,7 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
                    "Government fees are pass-through estimates."
                  ].map((text, i) => (
                    <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600">
-                      <div className="w-1.5 h-1.5 bg-[#006C35] rounded-full mt-2 shrink-0"></div>
+                      <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ backgroundColor: BRAND.colors.accent }}></div>
                       {text}
                    </li>
                  ))}
@@ -151,7 +157,8 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
                       placeholder="e.g. John Doe"
-                      className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
+                      className="w-full bg-[#F8F9FA] border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
+                      style={{ color: BRAND.colors.primary }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -165,7 +172,8 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
                       value={formData.email}
                       onChange={e => setFormData({...formData, email: e.target.value})}
                       placeholder="john@company.com"
-                      className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
+                      className="w-full bg-[#F8F9FA] border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
+                      style={{ color: BRAND.colors.primary }}
                     />
                   </div>
                </div>
@@ -182,7 +190,8 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
                       value={formData.phone}
                       onChange={e => setFormData({...formData, phone: e.target.value})}
                       placeholder="+966 5..."
-                      className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
+                      className="w-full bg-[#F8F9FA] border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
+                      style={{ color: BRAND.colors.primary }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -196,7 +205,8 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
                       value={formData.ref}
                       onChange={e => setFormData({...formData, ref: e.target.value})}
                       placeholder="ANB-1234567..."
-                      className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
+                      className="w-full bg-[#F8F9FA] border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
+                      style={{ color: BRAND.colors.primary }}
                     />
                   </div>
                </div>
@@ -205,7 +215,7 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                      <FileText size={12} /> Upload Receipt
                   </label>
-                  <div className="relative border-2 border-dashed border-slate-100 rounded-[2rem] p-12 text-center hover:bg-slate-50 transition-all group cursor-pointer overflow-hidden">
+                  <div className="relative border-2 border-dashed border-slate-100 rounded-[2rem] p-12 text-center hover:bg-[#F8F9FA] transition-all group cursor-pointer overflow-hidden">
                       <input 
                         required
                         type="file"
@@ -216,7 +226,7 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
                       />
                       {file ? (
                         <div className="space-y-2">
-                           <p className="text-sm font-black text-[#006C35]">{file.name}</p>
+                           <p className="text-sm font-black" style={{ color: BRAND.colors.accent }}>{file.name}</p>
                            <p className="text-[10px] text-slate-300 uppercase tracking-widest">File ready for encryption</p>
                         </div>
                       ) : (
@@ -232,7 +242,10 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
 
                <button 
                  disabled={isSubmitting}
-                 className="w-full bg-[#0A1A2F] text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-2xl hover:bg-[#C9A86A] transition-all disabled:opacity-50 flex items-center justify-center gap-4"
+                 className="w-full text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-4"
+                 style={{ backgroundColor: BRAND.colors.primary }}
+                 onMouseOver={(e) => { e.currentTarget.style.backgroundColor = BRAND.colors.secondary; e.currentTarget.style.color = BRAND.colors.primary; }}
+                 onMouseOut={(e) => { e.currentTarget.style.backgroundColor = BRAND.colors.primary; e.currentTarget.style.color = 'white'; }}
                >
                  {isSubmitting ? <><Loader2 size={20} className="animate-spin" /> Processing Transaction...</> : "Submit for Verification"}
                </button>

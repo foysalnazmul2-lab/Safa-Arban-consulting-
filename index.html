@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,30 +6,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Primary Meta Tags -->
-    <title>SafaArban | Premium Business Setup & MISA Licensing Saudi Arabia</title>
-    <meta name="title" content="SafaArban | Premium Business Setup & MISA Licensing Saudi Arabia">
-    <meta name="description" content="SafaArban Ltd is the elite gateway for Saudi business setup, specializing in MISA licensing, Regional HQ (RHQ) setup, 100% foreign ownership, and corporate banking in Riyadh. Trusted by global investors for Vision 2030 expansion.">
-    <meta name="keywords" content="Saudi business setup, MISA licensing, Regional HQ setup, 100% foreign ownership Saudi Arabia, Saudi investment license, Company formation Riyadh, Investor Visa KSA, Corporate Banking Saudi Arabia, PRO services Riyadh, Vision 2030 investment, SafaArban">
+    <title>SafaArban | Company Formation & Business Setup Saudi Arabia</title>
+    <meta name="title" content="SafaArban | Company Formation & Business Setup Saudi Arabia">
+    <meta name="description" content="Set up your company in Saudi Arabia with SafaArban. MISA licenses, 100% foreign ownership, CR registration, visas & compliance. Riyadh-based experts.">
+    <meta name="keywords" content="SafaArban, Business Setup Saudi Arabia, Company Formation Saudi Arabia, MISA License Saudi Arabia, Saudi Investment License, 100% Foreign Ownership Saudi Arabia">
     <meta name="author" content="SafaArban Ltd">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://safaarban.com/">
-    <meta property="og:title" content="SafaArban | Premium Business Setup & MISA Licensing Saudi Arabia">
-    <meta property="og:description" content="Elite gateway for Saudi business setup. Specialists in MISA licensing, Regional HQ setup, and 100% foreign ownership.">
+    <meta property="og:title" content="SafaArban | Company Formation & Business Setup Saudi Arabia">
+    <meta property="og:description" content="Set up your company in Saudi Arabia with SafaArban. MISA licenses, 100% foreign ownership, CR registration, visas & compliance. Riyadh-based experts.">
     <meta property="og:image" content="https://images.unsplash.com/photo-1516216628859-9bccecab13ca?q=80&w=1200&auto=format&fit=crop">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://safaarban.com/">
-    <meta property="twitter:title" content="SafaArban | Premium Business Setup & MISA Licensing Saudi Arabia">
-    <meta property="twitter:description" content="Elite gateway for Saudi business setup. Specialists in MISA licensing, Regional HQ setup, and 100% foreign ownership.">
+    <meta property="twitter:title" content="SafaArban | Company Formation & Business Setup Saudi Arabia">
+    <meta property="twitter:description" content="Set up your company in Saudi Arabia with SafaArban. MISA licenses, 100% foreign ownership, CR registration, visas & compliance. Riyadh-based experts.">
     <meta property="twitter:image" content="https://images.unsplash.com/photo-1516216628859-9bccecab13ca?q=80&w=1200&auto=format&fit=crop">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- External Resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://images.unsplash.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Babel for JSX transformation in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -39,24 +52,106 @@
             body { background: white !important; margin: 0; padding: 0; }
         }
         ::selection {
-            background-color: #C9A86A;
-            color: #0A1A2F;
+            background-color: #D4AF37; /* Metallic Champagne */
+            color: #051C2C; /* Deep Regency Blue */
+        }
+        /* Custom Scrollbar for Premium Feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b09255;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* ANIMATION ENGINE */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInTop {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .animate-in { animation-fill-mode: forwards; opacity: 0; }
+        .fade-in { animation-name: fadeIn; }
+        .slide-in-from-bottom-4 { animation-name: slideUp; --tw-enter-translate-y: 1rem; }
+        .slide-in-from-bottom-8 { animation-name: slideUp; --tw-enter-translate-y: 2rem; }
+        .slide-in-from-right-4 { animation-name: slideInRight; }
+        .slide-in-from-right-8 { animation-name: slideInRight; }
+        .slide-in-from-left-4 { animation-name: slideInLeft; }
+        .slide-in-from-left-10 { animation-name: slideInLeft; }
+        .slide-in-from-top-2 { animation-name: slideInTop; }
+        .zoom-in-95 { animation-name: zoomIn; }
+        .zoom-in { animation-name: zoomIn; }
+        
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-500 { animation-delay: 500ms; }
+        .duration-200 { animation-duration: 200ms; }
+        .duration-300 { animation-duration: 300ms; }
+        .duration-500 { animation-duration: 500ms; }
+        .duration-700 { animation-duration: 700ms; }
+        .duration-1000 { animation-duration: 1000ms; }
+
+        /* Mask for Marquee */
+        .mask-image-linear-gradient {
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
         }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-    "@emailjs/browser": "https://esm.sh/@emailjs/browser@^4.4.1"
-  }
-}
-</script>
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+        "lucide-react": "https://esm.sh/lucide-react@0.469.0?deps=react@18.2.0,react-dom@18.2.0",
+        "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+        "react-dom": "https://esm.sh/react-dom@18.2.0",
+        "react/": "https://esm.sh/react@18.2.0/",
+        "react": "https://esm.sh/react@18.2.0",
+        "@emailjs/browser": "https://esm.sh/@emailjs/browser@^4.4.1"
+      }
+    }
+    </script>
 </head>
-<body class="bg-slate-50 text-[#0A1A2F]">
+<body class="bg-[#F8F9FA] text-[#051C2C]">
     <div id="root"></div>
+    <script type="text/babel" data-presets="react,typescript" data-type="module" src="./index.tsx"></script>
 </body>
 </html>

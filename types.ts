@@ -1,42 +1,59 @@
 
 export type ServiceCategory = 
-  | 'Ministry of Investment'
-  | 'Ministry of Commerce'
-  | 'GOSI'
-  | 'Qiwa / HR'
-  | 'Passports / Muqeem'
-  | 'Special Residency & Elite Licenses'
   | 'Company Formation & Registration'
-  | 'Sector-Specific Licensing'
-  | 'Manpower & Immigration Solutions'
+  | 'Sector / Activity Licensing'
+  | 'Manpower & Immigration'
   | 'Corporate Compliance & Operations'
-  | 'Business Support Services'
-  | 'ZATCA & Tax Compliance';
+  | 'Strategy & Management Consulting'
+  | 'Financial & Tax Advisory'
+  | 'Human Capital & HR'
+  | 'Digital & IT Consulting'
+  | 'Marketing & Branding'
+  | 'Market Research'
+  | 'Legal Advisory'
+  | 'Operational Consulting'
+  | 'BPO & Managed Services'
+  | 'Support Services';
 
 export interface Service {
   id: string;
   category: ServiceCategory | string;
   name: string;
   professionalFee: number; // SafaArban's service charge
-  governmentFee: number;   // Official Gov/SADAD cost
-  price: number;           // Total (auto-calculated in UI usually)
+  governmentFee: number;   // Official Gov/SADAD cost (Estimated)
+  price: number;           // Total
   desc: string;
   code?: string;
   details?: string[];
   requirements?: string[];
   inclusions?: string[];
   exclusions?: string[];
+  image?: string;
+}
+
+export interface ServiceRecord {
+  id: string;
+  serviceId: string;
+  name: string;
+  category: string;
+  status: 'Pending' | 'Processing' | 'Action Needed' | 'Completed' | 'Cancelled';
+  dateRequested: string;
+  dateCompleted?: string;
+  price: number;
+  refNumber: string;
+  documents?: { name: string; url: string }[];
 }
 
 export interface CartItem extends Service {
   quantity?: number;
 }
 
-export type Page = 'home' | 'services' | 'quotation' | 'about' | 'contact' | 'blog' | 'payment-auth' | 'service-details' | 'privacy' | 'terms';
+export type Page = 'home' | 'services' | 'quotation' | 'about' | 'contact' | 'blog' | 'payment-auth' | 'service-details' | 'privacy' | 'terms' | 'client-portal' | 'admin-portal' | 'login';
 
 export interface ChatMessage {
   role: 'user' | 'model';
   parts: { text: string }[];
+  sources?: { title: string; uri: string; type?: 'web' | 'map' }[];
 }
 
 export interface ClientDetails {
@@ -57,6 +74,15 @@ export interface BlogPost {
   tags: string[];
 }
 
+export interface GlossaryTerm {
+  id: string;
+  term: string;
+  arabic: string;
+  phonetic?: string;
+  definition: string;
+  category: 'Government' | 'Legal' | 'Finance' | 'HR' | 'General' | 'Immigration';
+}
+
 export interface CorePageContent {
   slug: string;
   title: string;
@@ -65,4 +91,15 @@ export interface CorePageContent {
   overview: string;
   features: { title: string; desc: string }[];
   cta: string;
+  requirements?: string[];
+  exclusions?: string[];
+  details?: string[];
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'client';
+  company?: string;
 }
