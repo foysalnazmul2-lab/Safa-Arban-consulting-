@@ -1,9 +1,8 @@
-
 import React from 'react';
-import { Page } from '../types';
-import { BRAND } from '../constants';
+import { Page } from '../types.ts';
+import { BRAND } from '../constants.ts';
 import { Mail, Phone, MapPin, Linkedin, Twitter, Instagram, Globe, ArrowRight } from 'lucide-react';
-import { SafaArbanLogo } from './Navbar';
+import { SafaArbanLogo } from './Logo.tsx';
 
 interface FooterProps {
   setActivePage: (page: Page) => void;
@@ -34,17 +33,7 @@ const Footer: React.FC<FooterProps> = ({ setActivePage, onServiceClick }) => {
           <div className="lg:col-span-4 space-y-8 pr-8">
              <div className="flex flex-col leading-tight cursor-pointer group w-fit" onClick={() => setActivePage('home')}>
               {/* White Version of Logo for Footer */}
-              <svg viewBox="0 0 320 84" className="h-10 w-auto" xmlns="http://www.w3.org/2000/svg" fill="none">
-                <g transform="translate(4, 4)">
-                   <path d="M45 10 L75 10 L55 35 L25 35 Z" fill="#F26522" />
-                   <path d="M25 40 L55 40 L45 65 L15 65 Z" fill="white" />
-                </g>
-                <g transform="translate(90, 52)">
-                   <text fontFamily="Inter, sans-serif" fontWeight="800" fontSize="42" fill="white" letterSpacing="-0.02em">SAFA</text>
-                   <text x="115" fontFamily="Inter, sans-serif" fontWeight="800" fontSize="42" fill="white" letterSpacing="-0.02em">ARBAN</text>
-                   <text x="2" y="24" fontFamily="Inter, sans-serif" fontWeight="600" fontSize="9.5" fill="#F26522" letterSpacing="0.38em" style={{textTransform: 'uppercase'}}>Ltd</text>
-                </g>
-              </svg>
+              <SafaArbanLogo className="h-10 w-auto" variant="white" />
               <span className="text-[9px] font-bold text-white/40 tracking-[0.4em] uppercase transition-colors mt-2" style={{ color: `hover:${BRAND.colors.secondary}` }}>
                 Premium Gateway
               </span>

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { X, Download, Globe, ShieldCheck, TrendingUp, Users, Target, Award, Building2 } from 'lucide-react';
 import { BRAND } from '../constants';
-import { SafaArbanLogo } from './Navbar';
+import { SafaArbanLogo } from './Logo.tsx';
 
 interface CorporateProfileProps {
   isOpen: boolean;
@@ -46,7 +45,7 @@ const CorporateProfile: React.FC<CorporateProfileProps> = ({ isOpen, onClose }) 
               
               <div className="relative z-10 space-y-8">
                  <div className="bg-white/10 backdrop-blur-xl p-6 rounded-3xl inline-block mb-4 border border-white/10">
-                    <SafaArbanLogo className="h-20 w-auto brightness-0 invert" />
+                    <SafaArbanLogo className="h-20 w-auto" variant="white" />
                  </div>
                  <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none">
                     Building Legacies <br/> in Saudi Arabia.

@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { CreditCard, ChevronLeft, ChevronRight, MapPin, Download, Globe, FileText, Landmark, QrCode, Zap, CheckCircle2, Plus, Tag, Gift, Trash2, X } from 'lucide-react';
 import { CartItem } from '../types';
 import { BRAND, SERVICES_DB } from '../constants';
-import { SafaArbanLogo } from './Navbar';
+import { SafaArbanLogo } from './Logo.tsx';
 
 interface QuotationProps {
   items: CartItem[];
@@ -11,7 +10,7 @@ interface QuotationProps {
   onProceed: () => void;
   orderId: string;
   onAddItem?: (id: string) => void;
-  onRemoveItem?: (id: string) => void; // Added capability to remove items directly
+  onRemoveItem?: (id: string) => void;
   currency?: 'SAR' | 'USD';
 }
 

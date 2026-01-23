@@ -1,5 +1,5 @@
 
-import { Service, BlogPost, CorePageContent, GlossaryTerm } from './types';
+import { Service, BlogPost, CorePageContent, GlossaryTerm } from './types.ts';
 
 export const BRAND = {
   name: "SafaArban",

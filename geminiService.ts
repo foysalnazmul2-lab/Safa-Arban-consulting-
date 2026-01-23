@@ -1,7 +1,6 @@
-
 import { GoogleGenAI } from "@google/genai";
-import { ChatMessage } from "./types";
-import { GLOSSARY_DB } from "./constants";
+import { ChatMessage } from "./types.ts";
+import { GLOSSARY_DB } from "./constants.ts";
 
 // Construct a context string from the Glossary
 const GLOSSARY_CONTEXT = GLOSSARY_DB.map(item => 
@@ -85,27 +84,13 @@ export interface AIResponse {
 
 export class GeminiService {
   
-  private async getLocation(): Promise<{ latitude: number; longitude: number } | null> {
-    if (!navigator.geolocation) return null;
-    try {
-      return await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-          (err) => { console.warn("Loc access denied", err); resolve(null); },
-          { timeout: 4000 }
-        );
-      });
-    } catch (e) {
-      return null;
-    }
-  }
-
   async sendMessage(history: ChatMessage[], message: string, mode: 'thinking' | 'search' = 'thinking'): Promise<AIResponse> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     try {
       if (mode === 'thinking') {
-        // Deep Reasoning Mode
+        // Feature: Think more when needed
+        // Use gemini-3-pro-preview with thinking budget of 32768
         const response = await ai.models.generateContent({
           model: 'gemini-3-pro-preview',
           contents: [
@@ -119,36 +104,25 @@ export class GeminiService {
         });
         return { text: response.text || "I apologize, but I'm unable to provide an answer at this moment. Please contact our premium consultants.", sources: [] };
       } else {
-        // Search Grounding Mode with Location
-        const location = await this.getLocation();
-        const toolConfig = location ? {
-            retrievalConfig: {
-                latLng: { latitude: location.latitude, longitude: location.longitude }
-            }
-        } : undefined;
-
-        // Use gemini-2.5-flash because Maps Grounding is only supported in Gemini 2.5 models
+        // Feature: Use Google Search data
+        // Use gemini-3-flash-preview with googleSearch tool
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash', 
+          model: 'gemini-3-flash-preview', 
           contents: [
             ...history.map(h => ({ role: h.role, parts: h.parts })),
             { role: 'user', parts: [{ text: message }] }
           ],
           config: {
-            tools: [{ googleSearch: {} }, { googleMaps: {} }],
-            toolConfig: toolConfig,
+            tools: [{ googleSearch: {} }],
             // Merge core knowledge with search capability
-            systemInstruction: `${SYSTEM_INSTRUCTION}\n\nMODE: SEARCH ANALYST\nYou have access to Google Search and Google Maps. Use them to find real-time regulations, news, location data, and market insights. Always prioritize SafaArban's specific services and pricing from the core instructions, but use Search for external facts and Maps for location queries.`,
+            systemInstruction: `${SYSTEM_INSTRUCTION}\n\nMODE: SEARCH ANALYST\nYou have access to Google Search. Use it to find real-time regulations, news, location data, and market insights. Always prioritize SafaArban's specific services and pricing from the core instructions, but use Search for external facts.`,
           }
         });
 
-        // Extract sources (Web and Maps)
+        // Extract sources (Web only for 3-flash-preview currently)
         const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
           ?.map((c: any) => {
              if (c.web?.uri) return { title: c.web.title || 'Web Source', uri: c.web.uri, type: 'web' as const };
-             // Maps chunks often come in via 'web' in some contexts or explicit 'maps' chunks.
-             // We check both specific maps structure and fallback.
-             if (c.maps?.source?.uri) return { title: c.maps.title || 'Map Location', uri: c.maps.source.uri, type: 'map' as const };
              return null;
           })
           .filter((s: any) => s !== null) || [];
@@ -164,6 +138,7 @@ export class GeminiService {
   async generateImage(prompt: string, size: "1K" | "2K" | "4K" = "1K") {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
+      // Use gemini-3-pro-image-preview for high quality generation
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',
         contents: {
@@ -221,6 +196,7 @@ export class GeminiService {
   async analyzeImage(base64Data: string, mimeType: string, prompt: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
+      // Feature: Gemini Intelligence (analyze content)
       // Using Pro for deeper document analysis
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',

@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Shield, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { BRAND } from '../constants';
-import { SafaArbanLogo } from './Navbar';
+import { SafaArbanLogo } from './Logo.tsx';
 
 interface LoginProps {
   onLogin: (email: string) => void;
@@ -45,7 +44,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
               className="inline-block bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 mb-8 cursor-pointer hover:bg-white/20 transition-all"
               onClick={onBack}
             >
-               <SafaArbanLogo className="h-10 w-auto brightness-0 invert" />
+               <SafaArbanLogo className="h-10 w-auto" variant="white" />
             </div>
             <h1 className="text-5xl font-black leading-tight mb-6">
                Secure Client <br/><span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, #F2D696)` }}>Portal Access</span>

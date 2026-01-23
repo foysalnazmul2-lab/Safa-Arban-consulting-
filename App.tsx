@@ -1,26 +1,26 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Navbar from './components/Navbar';
-import Quotation from './components/Quotation';
-import AIAssistant from './components/AIAssistant';
-import Footer from './components/Footer';
-import Blog from './components/Blog';
-import PaymentAuth from './components/PaymentAuth';
-import ServiceDetails from './components/ServiceDetails';
-import PrivacyPolicy from './components/PrivacyPolicy';
-import TermsOfService from './components/TermsOfService';
-import Home from './components/Home';
-import About from './components/About';
-import ServicesPage from './components/ServicesPage';
-import ContactPage from './components/ContactPage';
-import SEO from './components/SEO';
-import LiveNotifications from './components/LiveNotifications';
-import ExitIntentModal from './components/ExitIntentModal';
-import TrackApplication from './components/TrackApplication';
-import ClientPortal from './components/ClientPortal';
-import Login from './components/Login';
-import { Page, CartItem, CorePageContent, User } from './types';
-import { SERVICES_DB, CORE_SERVICES_CONTENT, BRAND, BLOG_POSTS } from './constants';
+import Navbar from './components/Navbar.tsx';
+import Quotation from './components/Quotation.tsx';
+import AIAssistant from './components/AIAssistant.tsx';
+import Footer from './components/Footer.tsx';
+import Blog from './components/Blog.tsx';
+import PaymentAuth from './components/PaymentAuth.tsx';
+import ServiceDetails from './components/ServiceDetails.tsx';
+import PrivacyPolicy from './components/PrivacyPolicy.tsx';
+import TermsOfService from './components/TermsOfService.tsx';
+import Home from './components/Home.tsx';
+import About from './components/About.tsx';
+import ServicesPage from './components/ServicesPage.tsx';
+import ContactPage from './components/ContactPage.tsx';
+import SEO from './components/SEO.tsx';
+import LiveNotifications from './components/LiveNotifications.tsx';
+import ExitIntentModal from './components/ExitIntentModal.tsx';
+import TrackApplication from './components/TrackApplication.tsx';
+import ClientPortal from './components/ClientPortal.tsx';
+import Login from './components/Login.tsx';
+import { Page, CartItem, CorePageContent, User } from './types.ts';
+import { SERVICES_DB, CORE_SERVICES_CONTENT, BRAND, BLOG_POSTS } from './constants.ts';
 import { CheckCircle } from 'lucide-react';
 
 const CATEGORY_IMAGES: Record<string, string> = {

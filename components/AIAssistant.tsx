@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Send, X, Bot, Loader2, Image as ImageIcon, Sparkles, Download, Maximize2, Minimize2, Scan, Upload, FileSearch, Quote, Eraser, RefreshCw, Wand2, Globe, BrainCircuit, ExternalLink, MapPin } from 'lucide-react';
-import { gemini } from '../geminiService';
-import { ChatMessage } from '../types';
-import { BRAND } from '../constants';
+import { gemini } from '../geminiService.ts';
+import { ChatMessage } from '../types.ts';
+import { BRAND } from '../constants.ts';
 
 type AssistantMode = 'chat' | 'visual' | 'scan';
 type VisualSubMode = 'generate' | 'edit';

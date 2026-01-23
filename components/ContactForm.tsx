@@ -59,26 +59,6 @@ const ContactForm: React.FC = () => {
     };
 
     try {
-      // ---------------------------------------------------------
-      // BACKEND CONNECTION
-      // ---------------------------------------------------------
-      // In a live environment, this connects to your secured API.
-      // The backend handles database storage (SQL/NoSQL) and 
-      // triggers the transactional email via SendGrid/AWS SES.
-      
-      /* 
-      const response = await fetch('https://api.safaarban.com/v1/inquiries', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Client-ID': 'web-v2'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) throw new Error('API Gateway Error');
-      */
-
       // Simulation of network latency and successful server response
       await new Promise(resolve => setTimeout(resolve, 1500));
       
@@ -88,7 +68,6 @@ const ContactForm: React.FC = () => {
       setFormData({ name: '', email: '', phone: '', company: '', message: '' });
     } catch (error) {
       console.error('Submission Error:', error);
-      // In production, you would handle specific error codes here
     } finally {
       setIsSubmitting(false);
     }
@@ -169,36 +148,38 @@ const ContactForm: React.FC = () => {
           </button>
         </div>
       ) : (
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6 relative z-10" noValidate>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2 group/field">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-2 transition-colors">Full Name <span className="text-red-500">*</span></label>
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-8 relative z-10" noValidate>
+          
+          {/* Row 1: Identity */}
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-3 group/field">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Full Name <span className="text-red-500">*</span></label>
               <div className="relative">
-                <div className="absolute left-4 top-4 text-slate-400 transition-colors"><User size={18} /></div>
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><User size={18} /></div>
                 <input
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   type="text"
                   placeholder="e.g. Sultan Al-Saud"
-                  className={`w-full pl-12 pr-4 py-4 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.name ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
+                  className={`w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.name ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
                   style={{ color: BRAND.colors.primary }}
                 />
               </div>
               {errors.name && <p className="text-red-500 text-[10px] font-bold pl-2 flex items-center gap-1"><AlertCircle size={10} /> {errors.name}</p>}
             </div>
 
-            <div className="space-y-2 group/field">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-2 transition-colors">Email Address <span className="text-red-500">*</span></label>
+            <div className="space-y-3 group/field">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Email Address <span className="text-red-500">*</span></label>
               <div className="relative">
-                <div className="absolute left-4 top-4 text-slate-400 transition-colors"><Mail size={18} /></div>
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><Mail size={18} /></div>
                 <input
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   type="email"
                   placeholder="name@company.com"
-                  className={`w-full pl-12 pr-4 py-4 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.email ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
+                  className={`w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.email ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
                   style={{ color: BRAND.colors.primary }}
                 />
               </div>
@@ -206,51 +187,53 @@ const ContactForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2 group/field">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-2 transition-colors">Phone Number <span className="text-red-500">*</span></label>
+          {/* Row 2: Contact Info */}
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-3 group/field">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Phone Number <span className="text-red-500">*</span></label>
               <div className="relative">
-                <div className="absolute left-4 top-4 text-slate-400 transition-colors"><Phone size={18} /></div>
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><Phone size={18} /></div>
                 <input
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
                   type="tel"
                   placeholder="+966 5..."
-                  className={`w-full pl-12 pr-4 py-4 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.phone ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
+                  className={`w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.phone ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
                   style={{ color: BRAND.colors.primary }}
                 />
               </div>
               {errors.phone && <p className="text-red-500 text-[10px] font-bold pl-2 flex items-center gap-1"><AlertCircle size={10} /> {errors.phone}</p>}
             </div>
 
-            <div className="space-y-2 group/field">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-2 transition-colors">Company Name (Optional)</label>
+            <div className="space-y-3 group/field">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Company Name (Optional)</label>
               <div className="relative">
-                <div className="absolute left-4 top-4 text-slate-400 transition-colors"><Building size={18} /></div>
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><Building size={18} /></div>
                 <input
                   name="company"
                   value={formData.company}
                   onChange={handleChange}
                   type="text"
                   placeholder="Entity Name"
-                  className="w-full pl-12 pr-4 py-4 bg-[#F8F9FA] border border-slate-100 rounded-2xl outline-none focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10 transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400"
+                  className="w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border border-slate-100 rounded-2xl outline-none focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10 transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400"
                   style={{ color: BRAND.colors.primary }}
                 />
               </div>
             </div>
           </div>
 
-          <div className="space-y-2 group/field">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-2 transition-colors">Message <span className="text-red-500">*</span></label>
+          {/* Message Area */}
+          <div className="space-y-3 group/field">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Message <span className="text-red-500">*</span></label>
             <div className="relative">
-              <div className="absolute left-4 top-4 text-slate-400 transition-colors"><MessageSquare size={18} /></div>
+              <div className="absolute left-5 top-5 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><MessageSquare size={18} /></div>
               <textarea
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
                 placeholder="Please describe your business requirements..."
-                className={`w-full pl-12 pr-4 py-4 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 min-h-[120px] resize-none ${errors.message ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
+                className={`w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 min-h-[160px] resize-none ${errors.message ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
                 style={{ color: BRAND.colors.primary }}
               />
             </div>
@@ -260,7 +243,7 @@ const ContactForm: React.FC = () => {
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="w-full text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98]"
+            className="w-full text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] mt-4"
             style={{ backgroundColor: BRAND.colors.primary }}
             onMouseOver={(e) => { e.currentTarget.style.backgroundColor = BRAND.colors.secondary; e.currentTarget.style.color = BRAND.colors.primary; }}
             onMouseOut={(e) => { e.currentTarget.style.backgroundColor = BRAND.colors.primary; e.currentTarget.style.color = 'white'; }}

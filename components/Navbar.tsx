@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ShoppingCart, Search, Globe, User, LogIn, DollarSign } from 'lucide-react';
-import { Page } from '../types';
-import { BRAND } from '../constants';
+import { Page } from '../types.ts';
+import { BRAND } from '../constants.ts';
+import { SafaArbanLogo } from './Logo.tsx';
 
 interface NavbarProps {
   activePage: Page;
@@ -12,26 +12,6 @@ interface NavbarProps {
   currency?: 'SAR' | 'USD';
   onToggleCurrency?: () => void;
 }
-
-export const SafaArbanLogo = ({ className = "h-12" }: { className?: string }) => (
-  <svg viewBox="0 0 320 84" className={className} xmlns="http://www.w3.org/2000/svg" fill="none" aria-label="SafaArban Logo">
-    {/* Symbol: Abstract "S" formed by two interlocking geometric shapes */}
-    <g transform="translate(4, 4)">
-        {/* Top Shape (Coral Orange) */}
-       <path d="M45 10 L75 10 L55 35 L25 35 Z" fill="#F26522" />
-       
-       {/* Bottom Shape (Deep Navy) */}
-       <path d="M25 40 L55 40 L45 65 L15 65 Z" fill="#051C2C" />
-    </g>
-
-    {/* Typography */}
-    <g transform="translate(90, 52)">
-       <text fontFamily="Inter, sans-serif" fontWeight="800" fontSize="42" fill="#051C2C" letterSpacing="-0.02em">SAFA</text>
-       <text x="115" fontFamily="Inter, sans-serif" fontWeight="800" fontSize="42" fill="#051C2C" letterSpacing="-0.02em">ARBAN</text>
-       <text x="2" y="24" fontFamily="Inter, sans-serif" fontWeight="600" fontSize="9.5" fill="#F26522" letterSpacing="0.38em" style={{textTransform: 'uppercase'}}>Ltd</text>
-    </g>
-  </svg>
-);
 
 const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, cartCount, onOpenTracker, currency = 'SAR', onToggleCurrency }) => {
   const [isOpen, setIsOpen] = useState(false);
