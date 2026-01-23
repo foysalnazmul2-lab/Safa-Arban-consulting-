@@ -218,7 +218,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user, onLogout }) => {
                
                {/* Notification Center */}
                <div className="relative" ref={notifRef}>
-                  <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className="relative text-slate-400 transition-colors p-2 rounded-full hover:bg-slate-50" style={{ ':hover': { color: BRAND.colors.primary } } as any}>
+                  <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className="relative text-slate-400 transition-colors p-2 rounded-full hover:bg-slate-50 hover:text-[#051C2C]">
                      <Bell size={20} />
                      {unreadCount > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full border-2 border-white animate-pulse" style={{ backgroundColor: BRAND.colors.alert }}></span>}
                   </button>
@@ -484,7 +484,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user, onLogout }) => {
                            <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
                               {tickets.map(tkt => (
                                  <div key={tkt.id} onClick={() => setSelectedTicketId(tkt.id)} className="p-6 hover:bg-slate-50 transition-colors cursor-pointer group flex items-center justify-between">
-                                    <div className="flex items-center gap-4"><div className={`p-3 rounded-xl shrink-0 ${tkt.status === 'Open' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}><MessageSquare size={20} /></div><div><div className="flex items-center gap-3 mb-1"><h4 className="font-bold text-sm transition-colors group-hover:text-[#E9443E]" style={{ color: BRAND.colors.primary }}>{tkt.subject}</h4><span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border ${getStatusStyles(tkt.status)}`}>{tkt.status}</span></div><p className="text-xs text-slate-400 font-medium line-clamp-1">{tkt.messages[tkt.messages.length - 1].text}</p><div className="flex items-center gap-2 mt-2 text-[10px] text-slate-400 font-mono"><span>#{tkt.id}</span><span>•</span><span>{tkt.date}</span></div></div></div><ChevronRight size={16} className="text-slate-300 transition-colors" style={{ ':group-hover': { color: BRAND.colors.primary } } as any} />
+                                    <div className="flex items-center gap-4"><div className={`p-3 rounded-xl shrink-0 ${tkt.status === 'Open' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}><MessageSquare size={20} /></div><div><div className="flex items-center gap-3 mb-1"><h4 className="font-bold text-sm transition-colors group-hover:text-[#E9443E]" style={{ color: BRAND.colors.primary }}>{tkt.subject}</h4><span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border ${getStatusStyles(tkt.status)}`}>{tkt.status}</span></div><p className="text-xs text-slate-400 font-medium line-clamp-1">{tkt.messages[tkt.messages.length - 1].text}</p><div className="flex items-center gap-2 mt-2 text-[10px] text-slate-400 font-mono"><span>#{tkt.id}</span><span>•</span><span>{tkt.date}</span></div></div></div><ChevronRight size={16} className="text-slate-300 transition-colors hover:text-[#051C2C]" />
                                  </div>
                               ))}
                            </div>

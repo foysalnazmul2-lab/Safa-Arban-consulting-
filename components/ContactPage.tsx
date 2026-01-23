@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import ContactForm from './ContactForm';
 import BookingCalendar from './BookingCalendar';
 import CorporateProfile from './CorporateProfile';
-import { MapPin, Navigation, Clock, MessageSquare, Calendar as CalendarIcon, Download, FileText, ArrowRight, Mail, Phone, Globe } from 'lucide-react';
+import { MapPin, Navigation, MessageSquare, Calendar as CalendarIcon, Download, FileText, ArrowRight, Mail, Phone } from 'lucide-react';
 import { BRAND } from '../constants';
 
 const ContactPage: React.FC = () => {
@@ -22,7 +22,9 @@ const ContactPage: React.FC = () => {
           <div className="grid lg:grid-cols-12 min-h-screen">
              
              {/* Left Panel: Info & Corporate Profile */}
-             <div className="lg:col-span-5 text-white py-20 px-8 lg:px-16 flex flex-col justify-center lg:sticky lg:top-0 lg:h-screen overflow-y-auto no-scrollbar" style={{ backgroundColor: window.innerWidth < 1024 ? BRAND.colors.primary : 'transparent' }}>
+             <div 
+               className="lg:col-span-5 text-white py-20 px-8 lg:px-16 flex flex-col justify-center lg:sticky lg:top-0 lg:h-screen overflow-y-auto no-scrollbar bg-[#051C2C] lg:bg-transparent"
+             >
                 
                 <div className="mb-12">
                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest mb-6 text-[#F26522]">
@@ -147,4 +149,3 @@ const ContactPage: React.FC = () => {
 };
 
 export default ContactPage;
-    
