@@ -24,7 +24,8 @@ import {
   LayoutTemplate,
   FileCheck,
   ShieldCheck,
-  MousePointer
+  MousePointer,
+  BookOpen
 } from 'lucide-react';
 import { BRAND, SERVICES_DB } from '../constants';
 import { gemini } from '../geminiService';
@@ -84,15 +85,15 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
 
   const toggleLanguage = (lang: string) => {
     if (selectedLanguages.includes(lang)) {
+        // Prevent removing the last language
         if (selectedLanguages.length > 1) {
             setSelectedLanguages(prev => prev.filter(l => l !== lang));
         }
     } else {
         if (selectedLanguages.length < 3) {
             setSelectedLanguages(prev => [...prev, lang]);
-        } else {
-            alert("Maximum 3 languages allowed.");
         }
+        // Removed alert to improve UX
     }
   };
 
@@ -372,7 +373,7 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
             y = 30;
         }
 
-        const isHeader = /^\d+\./.test(line) || (/^[A-Z\s]+$/.test(line) && line.length > 5);
+        const isHeader = /^\d+\./.test(line) || (/^[A-Z]/.test(line) && line.length > 5);
         const isBullet = line.trim().startsWith('-') || line.trim().startsWith('•');
 
         if (isHeader) {
@@ -553,7 +554,7 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
 
                         <div className="group">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
-                                <Globe size={12} className="inline mr-1" /> Languages (Max 3)
+                                <Globe size={12} className="inline mr-1" /> Languages ({selectedLanguages.length}/3)
                             </label>
                             <div className="flex flex-wrap gap-2">
                                 {LANGUAGES.map(lang => (
@@ -680,16 +681,22 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
             {agreementText ? (
                 <div className="flex-1 flex flex-col h-full relative z-10">
                     {/* Clause Quick-Insert Bar */}
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
-                        {LEGAL_CLAUSES.map((clause) => (
-                            <button
-                                key={clause.id}
-                                onClick={() => handleInsertClause(clause.content)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors border border-slate-700 shrink-0 whitespace-nowrap"
-                            >
-                                <Plus size={10} className="text-emerald-400" /> {clause.title}
-                            </button>
-                        ))}
+                    <div className="mb-4">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1">
+                            <BookOpen size={10} /> Quick-Insert Clauses
+                        </p>
+                        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                            {LEGAL_CLAUSES.map((clause) => (
+                                <button
+                                    key={clause.id}
+                                    onClick={() => handleInsertClause(clause.content)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors border border-slate-700 shrink-0 whitespace-nowrap"
+                                    title={clause.title}
+                                >
+                                    <Plus size={10} className="text-emerald-400" /> {clause.title}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                     
                     {/* Document Paper */}
@@ -705,6 +712,7 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
                                 className="w-full h-full p-12 bg-transparent border-none outline-none resize-none font-serif text-sm leading-loose whitespace-pre-wrap text-slate-900"
                                 placeholder="Generated text will appear here..."
                                 spellCheck={false}
+                                dir="auto"
                             />
                         </div>
 
