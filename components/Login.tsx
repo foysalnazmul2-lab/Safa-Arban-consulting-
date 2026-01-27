@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Shield, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { BRAND } from '../constants';
-import { SafaArbanLogo } from './Logo.tsx';
+import { SafaArbanLogo } from './Logo';
 import { useLanguage } from '../LanguageContext';
 
 interface LoginProps {

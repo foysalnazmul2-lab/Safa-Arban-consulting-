@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { CreditCard, ChevronLeft, ChevronRight, MapPin, Download, Globe, FileText, Landmark, QrCode, Zap, CheckCircle2, Plus, Tag, Gift, Trash2, X, Printer } from 'lucide-react';
 import { CartItem } from '../types';
 import { BRAND, SERVICES_DB } from '../constants';
-import { SafaArbanLogo } from './Logo.tsx';
+import { SafaArbanLogo } from './Logo';
 
 interface QuotationProps {
   items: CartItem[];

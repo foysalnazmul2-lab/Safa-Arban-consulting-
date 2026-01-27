@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Users, Calendar, Mail, LogOut, Search, Bell, Receipt, PlusCircle, PieChart, FileText, Trash2, DollarSign, MoreHorizontal, Briefcase } from 'lucide-react';
 import { Page, User } from '../types';
 import { useLanguage } from '../LanguageContext';
-import { SafaArbanLogo } from './Logo.tsx';
+import { SafaArbanLogo } from './Logo';
 
 interface AdminPortalProps {
   user: User;

@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { X, Download, Globe, ShieldCheck, TrendingUp, Users, Target, Award, Building2, Loader2 } from 'lucide-react';
 import { BRAND } from '../constants';
-import { SafaArbanLogo } from './Logo.tsx';
+import { SafaArbanLogo } from './Logo';
 
 interface CorporateProfileProps {
   isOpen: boolean;

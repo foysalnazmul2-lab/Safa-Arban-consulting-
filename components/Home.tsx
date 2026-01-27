@@ -1,24 +1,24 @@
 
 import React from 'react';
-import Hero from './Hero.tsx';
-import { Page } from '../types.ts';
-import { BLOG_POSTS, BRAND } from '../constants.ts';
-import BusinessTools from './BusinessTools.tsx';
-import ServiceEcosystem from './ServiceEcosystem.tsx';
-import SetupWizard from './SetupWizard.tsx';
-import CostCalculator from './CostCalculator.tsx';
-import GlobalPresence from './GlobalPresence.tsx';
-import VerificationPortal from './VerificationPortal.tsx';
-import MarketPulse from './MarketPulse.tsx';
-import ResidencyCalculator from './ResidencyCalculator.tsx';
-import EconomicZones from './EconomicZones.tsx';
-import JourneyTimeline from './JourneyTimeline.tsx';
-import SectorFocus from './SectorFocus.tsx';
-import ComplianceRadar from './ComplianceRadar.tsx';
-import LifestyleShowcase from './LifestyleShowcase.tsx';
-import Partners from './Partners.tsx';
-import SaudiMap from './SaudiMap.tsx';
-import CostOfLiving from './CostOfLiving.tsx';
+import Hero from './Hero';
+import { Page } from '../types';
+import { BLOG_POSTS, BRAND } from '../constants';
+import BusinessTools from './BusinessTools';
+import ServiceEcosystem from './ServiceEcosystem';
+import SetupWizard from './SetupWizard';
+import CostCalculator from './CostCalculator';
+import GlobalPresence from './GlobalPresence';
+import VerificationPortal from './VerificationPortal';
+import MarketPulse from './MarketPulse';
+import ResidencyCalculator from './ResidencyCalculator';
+import EconomicZones from './EconomicZones';
+import JourneyTimeline from './JourneyTimeline';
+import SectorFocus from './SectorFocus';
+import ComplianceRadar from './ComplianceRadar';
+import LifestyleShowcase from './LifestyleShowcase';
+import Partners from './Partners';
+import SaudiMap from './SaudiMap';
+import CostOfLiving from './CostOfLiving';
 import { 
   ArrowRight,
   ShieldCheck,

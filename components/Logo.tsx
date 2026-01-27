@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BRAND } from '../constants.ts';
+import { BRAND } from '../constants';
 
 export const SafaArbanLogo = ({ className = "h-12", variant = 'color' }: { className?: string, variant?: 'color' | 'white' }) => (
   <svg viewBox="0 0 380 84" className={className} xmlns="http://www.w3.org/2000/svg" fill="none" aria-label="SafaArban Logo">

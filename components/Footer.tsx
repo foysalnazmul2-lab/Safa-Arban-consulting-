@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { Page } from '../types.ts';
-import { BRAND } from '../constants.ts';
+import { Page } from '../types';
+import { BRAND } from '../constants';
 import { Linkedin, Twitter, Instagram, ShieldCheck, QrCode, Mail, Loader2, Check, ArrowUpRight } from 'lucide-react';
-import { SafaArbanLogo } from './Logo.tsx';
+import { SafaArbanLogo } from './Logo';
 
 interface FooterProps {
   setActivePage: (page: Page) => void;

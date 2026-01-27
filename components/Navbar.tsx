@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ShoppingCart, Search, Globe, User, LogIn, DollarSign, ChevronDown } from 'lucide-react';
-import { Page } from '../types.ts';
-import { BRAND } from '../constants.ts';
-import { SafaArbanLogo } from './Logo.tsx';
+import { Page } from '../types';
+import { BRAND } from '../constants';
+import { SafaArbanLogo } from './Logo';
 import { useLanguage } from '../LanguageContext';
 
 interface NavbarProps {

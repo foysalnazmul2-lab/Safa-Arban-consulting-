@@ -1,7 +1,7 @@
 
-import { GoogleGenAI, Schema } from "@google/genai";
-import { ChatMessage } from "./types.ts";
-import { GLOSSARY_DB, SERVICES_DB, CORE_SERVICES_CONTENT, BLOG_POSTS } from "./constants.ts";
+import { GoogleGenAI, Schema, Modality } from "@google/genai";
+import { ChatMessage } from "./types";
+import { GLOSSARY_DB, SERVICES_DB, CORE_SERVICES_CONTENT, BLOG_POSTS } from "./constants";
 
 // Construct a context string from the Glossary
 const GLOSSARY_CONTEXT = GLOSSARY_DB.map(item => 
@@ -165,14 +165,18 @@ export class GeminiService {
     }
   }
   
-  async sendMessage(history: ChatMessage[], message: string, mode: 'thinking' | 'search' = 'thinking', persona: AIPersona = 'professional'): Promise<AIResponse> {
+  async sendMessage(
+    history: ChatMessage[], 
+    message: string, 
+    mode: 'thinking' | 'search' | 'fast' | 'maps' = 'thinking', 
+    persona: AIPersona = 'professional'
+  ): Promise<AIResponse> {
     const instruction = GET_SYSTEM_INSTRUCTION(persona);
     
     try {
       if (mode === 'thinking') {
-        // Attempt with Thinking Model (Pro)
-        return await this.retry(
-          async () => {
+        // Deep Reasoning (Pro)
+        return await this.retry(async () => {
             const response = await this.ai.models.generateContent({
               model: 'gemini-3-pro-preview',
               contents: [
@@ -184,27 +188,46 @@ export class GeminiService {
                 thinkingConfig: { thinkingBudget: 32768 } 
               }
             });
-            return { text: response.text || "I apologize, I couldn't generate a response at this time.", sources: [] };
-          },
-          3, // Retries
-          2000, // Initial Delay
-          // Fallback to Flash
-          async () => {
+            return { text: response.text || "I apologize, I couldn't generate a response.", sources: [] };
+        });
+      } else if (mode === 'fast') {
+        // Low Latency (Flash Lite)
+        return await this.retry(async () => {
             const response = await this.ai.models.generateContent({
-              model: 'gemini-3-flash-preview',
-              contents: [
-                ...history.map(h => ({ role: h.role, parts: h.parts })),
-                { role: 'user', parts: [{ text: message }] }
-              ],
-              config: {
-                systemInstruction: instruction
-              }
+                model: 'gemini-flash-lite-latest',
+                contents: [
+                    ...history.map(h => ({ role: h.role, parts: h.parts })),
+                    { role: 'user', parts: [{ text: message }] }
+                ],
+                config: { systemInstruction: instruction }
             });
-            return { text: response.text || "I apologize, I couldn't generate a response at this time.", sources: [] };
-          }
-        );
+            return { text: response.text || "Response generated.", sources: [] };
+        });
+      } else if (mode === 'maps') {
+        // Maps Grounding
+        return await this.retry(async () => {
+            const response = await this.ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [
+                    ...history.map(h => ({ role: h.role, parts: h.parts })),
+                    { role: 'user', parts: [{ text: message }] }
+                ],
+                config: {
+                    tools: [{ googleMaps: {} }],
+                    systemInstruction: instruction
+                }
+            });
+            
+            const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+            ?.map((c: any) => {
+               if (c.web?.uri) return { title: c.web.title || 'Map Source', uri: c.web.uri, type: 'map' as const };
+               return null;
+            }).filter((s: any) => s !== null) || [];
+
+            return { text: response.text || "I couldn't find that location info.", sources };
+        });
       } else {
-        // Search Mode (Flash) - Retry logic added
+        // Search Mode (Flash)
         return await this.retry(async () => {
           const response = await this.ai.models.generateContent({
             model: 'gemini-3-flash-preview', 
@@ -214,7 +237,7 @@ export class GeminiService {
             ],
             config: {
               tools: [{ googleSearch: {} }],
-              systemInstruction: `${instruction}\n\nMODE: SEARCH ANALYST\nYou have access to Google Search. Use it to find real-time regulations, news, location data, and market insights. Always prioritize SafaArban's specific services and pricing from the core instructions, but use Search for external facts.`,
+              systemInstruction: `${instruction}\n\nMODE: SEARCH ANALYST\nUse Google Search for real-time data.`,
             }
           });
 
@@ -225,13 +248,102 @@ export class GeminiService {
             })
             .filter((s: any) => s !== null) || [];
 
-          return { text: response.text || "I couldn't find relevant information on the web.", sources };
+          return { text: response.text || "I couldn't find relevant information.", sources };
         });
       }
     } catch (error) {
       console.error("Gemini Error:", error);
-      return { text: "The advisor terminal is currently unavailable due to high demand. Please contact our Riyadh HQ directly.", sources: [] };
+      return { text: "The advisor terminal is currently unavailable.", sources: [] };
     }
+  }
+
+  // --- VEO VIDEO GENERATION ---
+  async generateVideo(prompt: string, imageBase64?: string): Promise<string | null> {
+    try {
+        let operation;
+        
+        if (imageBase64) {
+            // Image-to-Video
+            operation = await this.ai.models.generateVideos({
+                model: 'veo-3.1-fast-generate-preview',
+                prompt: prompt,
+                image: {
+                    imageBytes: imageBase64,
+                    mimeType: 'image/png' // Assuming PNG from canvas/upload for simplicity
+                },
+                config: {
+                    numberOfVideos: 1,
+                    resolution: '720p',
+                    aspectRatio: '16:9'
+                }
+            });
+        } else {
+            // Text-to-Video
+            operation = await this.ai.models.generateVideos({
+                model: 'veo-3.1-fast-generate-preview',
+                prompt: prompt,
+                config: {
+                    numberOfVideos: 1,
+                    resolution: '1080p',
+                    aspectRatio: '16:9'
+                }
+            });
+        }
+
+        // Polling
+        while (!operation.done) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            operation = await this.ai.operations.getVideosOperation({ operation: operation });
+        }
+
+        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        if (downloadLink) {
+            return `${downloadLink}&key=${process.env.API_KEY}`;
+        }
+        return null;
+
+    } catch (error) {
+        console.error("Veo Gen Error:", error);
+        return null;
+    }
+  }
+
+  // --- VIDEO ANALYSIS ---
+  async analyzeVideo(videoBase64: string, mimeType: string, prompt: string): Promise<string> {
+      try {
+          const response = await this.ai.models.generateContent({
+              model: 'gemini-3-pro-preview',
+              contents: {
+                  parts: [
+                      { inlineData: { data: videoBase64, mimeType } },
+                      { text: prompt }
+                  ]
+              }
+          });
+          return response.text || "Unable to analyze video.";
+      } catch (error) {
+          console.error("Video Analysis Error:", error);
+          return "Error analyzing video content.";
+      }
+  }
+
+  // --- AUDIO TRANSCRIPTION ---
+  async transcribeAudio(audioBase64: string, mimeType: string): Promise<string> {
+      try {
+          const response = await this.ai.models.generateContent({
+              model: 'gemini-3-flash-preview',
+              contents: {
+                  parts: [
+                      { inlineData: { data: audioBase64, mimeType } },
+                      { text: "Transcribe this audio file verbatim." }
+                  ]
+              }
+          });
+          return response.text || "Transcription failed.";
+      } catch (error) {
+          console.error("Transcription Error:", error);
+          return "Error processing audio file.";
+      }
   }
 
   // --- CONTRACT GENERATION ---
@@ -509,7 +621,7 @@ export class GeminiService {
         model: 'gemini-2.5-flash-preview-tts',
         contents: { parts: [{ text }] },
         config: {
-          responseModalities: ['AUDIO'],
+          responseModalities: [Modality.AUDIO], 
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
           }
@@ -532,11 +644,10 @@ export class GeminiService {
     return this.ai.live.connect({
       model: 'gemini-2.5-flash-native-audio-preview-12-2025',
       config: {
-        responseModalities: ['AUDIO'],
+        responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
         },
-        // CHANGED: Pass string directly
         systemInstruction: GET_SYSTEM_INSTRUCTION('professional')
       },
       callbacks
