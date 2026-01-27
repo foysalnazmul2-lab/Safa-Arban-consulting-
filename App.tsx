@@ -27,6 +27,7 @@ import { Page, CartItem, CorePageContent, User } from './types';
 import { SERVICES_DB, CORE_SERVICES_CONTENT, BRAND, BLOG_POSTS } from './constants';
 import { CheckCircle } from 'lucide-react';
 import { LanguageProvider } from './LanguageContext';
+import { Analytics } from '@vercel/analytics/react';
 
 const AppContent: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('home');
@@ -222,6 +223,7 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => (
   <LanguageProvider>
     <AppContent />
+    <Analytics />
   </LanguageProvider>
 );
 
