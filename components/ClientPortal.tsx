@@ -6,22 +6,22 @@ import {
   MessageSquare, 
   LogOut, 
   Download, 
-  Briefcase,
-  Bell,
-  History,
-  FileKey,
-  CheckSquare,
-  Calendar,
-  Plus,
-  Trash2,
-  Check,
-  Menu,
-  X,
-  AlertCircle
+  Briefcase, 
+  Bell, 
+  History, 
+  FileKey, 
+  CheckSquare, 
+  Calendar, 
+  Plus, 
+  Trash2, 
+  Check, 
+  Menu, 
+  X, 
+  AlertCircle 
 } from 'lucide-react';
 import { BRAND } from '../constants';
 import { User } from '../types';
-import { SafaArbanLogo } from './Logo.tsx';
+import { SafaArbanLogo } from './Logo';
 import { useLanguage } from '../LanguageContext';
 
 interface ClientPortalProps {
