@@ -9,12 +9,15 @@ import {
   Building, 
   Zap,
   RefreshCw,
-  Layers
+  Layers,
+  Settings,
+  Target
 } from 'lucide-react';
 import { SERVICES_DB, BRAND } from '../constants';
 
 interface SetupWizardProps {
   onAddBundle: (ids: string[]) => void;
+  currency?: 'SAR' | 'USD';
 }
 
 const STEPS = [
@@ -33,7 +36,7 @@ const STEPS = [
     options: [
       { id: 'tech', label: 'Tech / Consulting / Services', icon: <Cpu size={20} /> },
       { id: 'trade', label: 'Trading / Retail / E-commerce', icon: <Layers size={20} /> },
-      { id: 'industrial', label: 'Manufacturing / Industry', icon: <Building size={20} /> }
+      { id: 'industrial', label: 'Manufacturing / Industry', icon: <Settings size={20} /> }
     ]
   },
   {
@@ -41,7 +44,7 @@ const STEPS = [
     question: "Scale & Timeline",
     options: [
       { id: 'fast', label: 'Immediate Launch (Fast-Track)', icon: <Zap size={20} /> },
-      { id: 'standard', label: 'Standard Setup (30 Days)', icon: <CheckCircle2 size={20} /> }
+      { id: 'standard', label: 'Standard Setup (30 Days)', icon: <Target size={20} /> }
     ]
   }
 ];
@@ -53,11 +56,13 @@ const BUNDLES: Record<string, string[]> = {
   'default': ['misa-license', 'commercial-registration']
 };
 
-const SetupWizard: React.FC<SetupWizardProps> = ({ onAddBundle }) => {
+const SetupWizard: React.FC<SetupWizardProps> = ({ onAddBundle, currency = 'SAR' }) => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResult, setShowResult] = useState(false);
+
+  const RATE = currency === 'USD' ? 0.2666 : 1;
 
   const handleOption = (optionId: string) => {
     setAnswers(prev => ({ ...prev, [step]: optionId }));
@@ -82,7 +87,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onAddBundle }) => {
 
   const recommendedIds = getBundleIds();
   const recommendedServices = SERVICES_DB.filter(s => recommendedIds.includes(s.id));
-  const totalValue = recommendedServices.reduce((acc, curr) => acc + curr.professionalFee, 0);
+  const totalValue = Math.floor(recommendedServices.reduce((acc, curr) => acc + curr.professionalFee, 0) * RATE);
 
   const reset = () => {
     setStep(0);
@@ -110,7 +115,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onAddBundle }) => {
            )}
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden min-h-[400px] flex flex-col justify-center">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden min-h-[400px] flex flex-col justify-center transition-all duration-500">
           
           {isAnalyzing ? (
             <div className="text-center space-y-6">
@@ -141,14 +146,14 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onAddBundle }) => {
                   </div>
                   <div className="bg-white/10 p-6 rounded-2xl border border-white/10 text-center min-w-[200px]">
                      <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Estimated Budget</p>
-                     <p className="text-3xl font-mono font-black" style={{ color: BRAND.colors.secondary }}>{totalValue.toLocaleString()}</p>
-                     <p className="text-[10px] text-slate-400 font-bold">SAR (Professional Fees)</p>
+                     <p className="text-3xl font-mono font-black" style={{ color: BRAND.colors.secondary }}>{currency === 'USD' ? '$' : ''}{totalValue.toLocaleString()}</p>
+                     <p className="text-[10px] text-slate-400 font-bold">{currency} (Professional Fees)</p>
                   </div>
                </div>
 
                <div className="space-y-3 mb-10">
                   {recommendedServices.map((service, idx) => (
-                    <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
+                    <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
                        <CheckCircle2 size={18} className="shrink-0" style={{ color: BRAND.colors.secondary }} />
                        <span className="text-sm font-bold text-white">{service.name}</span>
                     </div>
@@ -195,7 +200,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onAddBundle }) => {
                          onMouseOver={(e) => e.currentTarget.style.borderColor = BRAND.colors.secondary}
                          onMouseOut={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
                        >
-                          <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-slate-400 group-hover:text-[#0A1A2F] group-hover:bg-[#C9A86A] transition-colors">
+                          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-[#0A1A2F] group-hover:bg-[#C9A86A] transition-colors border border-white/5">
                              {option.icon}
                           </div>
                           <span className="font-bold text-sm text-slate-200 group-hover:text-white">{option.label}</span>

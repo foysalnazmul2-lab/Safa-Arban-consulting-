@@ -1,7 +1,8 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Page } from '../types.ts';
 import { BRAND } from '../constants.ts';
-import { Mail, Phone, MapPin, Linkedin, Twitter, Instagram, Globe, ArrowRight } from 'lucide-react';
+import { Linkedin, Twitter, Instagram, ShieldCheck, QrCode, Mail, Loader2, Check, ArrowUpRight } from 'lucide-react';
 import { SafaArbanLogo } from './Logo.tsx';
 
 interface FooterProps {
@@ -10,7 +11,18 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ setActivePage, onServiceClick }) => {
-  
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubscribe = async () => {
+    if (!email || !email.includes('@')) return;
+    setStatus('loading');
+    setTimeout(() => {
+        setStatus('success');
+        setEmail('');
+    }, 1500);
+  };
+
   const handleServiceClick = (slug: string) => {
     if (onServiceClick) {
       onServiceClick(slug);
@@ -21,102 +33,97 @@ const Footer: React.FC<FooterProps> = ({ setActivePage, onServiceClick }) => {
   };
 
   return (
-    <footer className="text-white pt-24 pb-12 border-t border-white/5 no-print relative overflow-hidden" style={{ backgroundColor: BRAND.colors.primary }}>
+    <footer className="bg-[#05101A] text-white pt-32 pb-12 relative overflow-hidden">
       {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-1" style={{ background: `linear-gradient(to right, ${BRAND.colors.secondary}, ${BRAND.colors.accent})` }}></div>
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full blur-[120px] opacity-10 pointer-events-none" style={{ backgroundColor: BRAND.colors.secondary }}></div>
-
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-20">
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+      
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-16 mb-24">
           
           {/* Brand Column */}
-          <div className="lg:col-span-4 space-y-8 pr-8">
-             <div className="flex flex-col leading-tight cursor-pointer group w-fit" onClick={() => setActivePage('home')}>
-              {/* White Version of Logo for Footer */}
-              <SafaArbanLogo className="h-10 w-auto" variant="white" />
-              <span className="text-[9px] font-bold text-white/40 tracking-[0.4em] uppercase transition-colors mt-2" style={{ color: `hover:${BRAND.colors.secondary}` }}>
-                Premium Gateway
-              </span>
+          <div className="md:col-span-5 space-y-8">
+             <div className="cursor-pointer" onClick={() => setActivePage('home')}>
+              <SafaArbanLogo className="h-12 w-auto" variant="white" />
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed font-medium">
+            <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
               Your elite partner for Business Setup in Saudi Arabia. We specialize in MISA Licensing, 100% Foreign Ownership, and Corporate Governance aligned with Vision 2030.
             </p>
-            <div className="flex gap-4">
-               {[Linkedin, Twitter, Instagram].map((Icon, i) => (
-                 <a key={i} href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center transition-all border border-white/5" style={{ borderColor: `hover:${BRAND.colors.secondary}`, color: `hover:${BRAND.colors.primary}`, backgroundColor: `hover:${BRAND.colors.secondary}` }}>
-                    <Icon size={18} />
-                 </a>
-               ))}
+            
+            <div className="flex items-center gap-4">
+                <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <QrCode size={32} className="text-white" />
+                </div>
+                <div>
+                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">MISA Certified</p>
+                    <p className="font-mono text-sm text-brand-accent">{BRAND.contact.cr}</p>
+                </div>
             </div>
           </div>
 
-          {/* Services Column */}
-          <div className="lg:col-span-3">
-            <h4 className="font-black uppercase tracking-widest text-xs mb-8" style={{ color: BRAND.colors.secondary }}>Core Services</h4>
-            <ul className="space-y-4 text-sm text-slate-400 font-medium">
+          {/* Links */}
+          <div className="md:col-span-3">
+            <h4 className="font-serif text-lg mb-8">Services</h4>
+            <ul className="space-y-4">
                {[
-                 { label: 'MISA Investment License', slug: 'misa-license' },
-                 { label: '100% Foreign Ownership', slug: 'foreign-ownership' },
-                 { label: 'Regional HQ (RHQ) Setup', slug: 'rhq-setup' },
-                 { label: 'Commercial Registration', slug: 'commercial-registration' },
-                 { label: 'Investor Visa & Iqama', slug: 'investor-visa' }
+                 { label: 'MISA Licensing', slug: 'misa-license' },
+                 { label: 'Regional HQ', slug: 'rhq-setup' },
+                 { label: 'Industrial', slug: 'sec-01' },
+                 { label: 'Premium Residency', slug: 'investor-visa' }
                ].map((item) => (
                  <li key={item.slug}>
-                   <button onClick={() => handleServiceClick(item.slug)} className="hover:text-white transition-colors text-left flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: BRAND.colors.secondary }}></span>
+                   <button onClick={() => handleServiceClick(item.slug)} className="text-slate-400 hover:text-white transition-colors text-sm flex items-center gap-2 group">
                       {item.label}
+                      <ArrowUpRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                    </button>
                  </li>
                ))}
             </ul>
           </div>
 
-          {/* Quick Links */}
-          <div className="lg:col-span-2">
-            <h4 className="font-black uppercase tracking-widest text-xs mb-8" style={{ color: BRAND.colors.secondary }}>Company</h4>
-            <ul className="space-y-4 text-sm text-slate-400 font-medium">
-               {['Home', 'About', 'Services', 'Insights', 'Contact'].map((item) => (
-                 <li key={item}>
-                   <button onClick={() => setActivePage(item.toLowerCase() === 'insights' ? 'blog' : item.toLowerCase() as any)} className="hover:text-white transition-colors text-left group flex items-center gap-2">
-                      {item} <ArrowRight size={12} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                   </button>
-                 </li>
-               ))}
-            </ul>
-          </div>
-
-          {/* Contact Column */}
-          <div className="lg:col-span-3">
-            <h4 className="font-black uppercase tracking-widest text-xs mb-8" style={{ color: BRAND.colors.secondary }}>Riyadh HQ</h4>
-            <div className="bg-white/5 rounded-2xl p-6 border border-white/5 space-y-4">
-               <div className="flex items-start gap-4">
-                  <MapPin style={{ color: BRAND.colors.secondary }} className="shrink-0 mt-1" size={18} />
-                  <span className="text-sm text-slate-300 font-medium">{BRAND.contact.address}</span>
-               </div>
-               <div className="flex items-center gap-4">
-                  <Phone style={{ color: BRAND.colors.secondary }} className="shrink-0" size={18} />
-                  <span className="text-sm text-slate-300 font-medium font-mono">{BRAND.contact.phone}</span>
-               </div>
-               <div className="flex items-center gap-4">
-                  <Mail className="shrink-0" size={18} style={{ color: BRAND.colors.secondary }} />
-                  <span className="text-sm text-slate-300 font-medium">{BRAND.contact.email}</span>
-               </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 font-mono pl-2">
-               <Globe size={12} /> CR: {BRAND.contact.cr}
+          {/* Newsletter */}
+          <div className="md:col-span-4">
+            <h4 className="font-serif text-lg mb-8">Regulatory Briefing</h4>
+            <p className="text-slate-400 text-sm mb-6">Stay ahead of Vision 2030 reforms. Weekly intelligence delivered to your inbox.</p>
+            
+            <div className="relative">
+                <input 
+                    type="email" 
+                    placeholder="Corporate Email Address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={status === 'success'}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-secondary transition-all"
+                />
+                <button 
+                    onClick={handleSubscribe}
+                    disabled={status !== 'idle'}
+                    className="absolute right-2 top-2 bottom-2 px-4 bg-brand-secondary text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-600 transition-colors flex items-center justify-center min-w-[80px]"
+                >
+                    {status === 'loading' ? <Loader2 size={16} className="animate-spin" /> : status === 'success' ? <Check size={16} /> : 'Join'}
+                </button>
             </div>
           </div>
 
         </div>
 
-        {/* Footer Bottom / SEO Bar */}
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-           <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-             © {new Date().getFullYear()} {BRAND.fullName}. All Rights Reserved.
-           </p>
-           <div className="flex gap-8">
-              <button onClick={() => setActivePage('privacy')} className="text-[10px] text-slate-600 uppercase font-bold hover:text-white transition-colors">Privacy Policy</button>
-              <button onClick={() => setActivePage('terms')} className="text-[10px] text-slate-600 uppercase font-bold hover:text-white transition-colors">Terms of Service</button>
+        {/* Footer Bottom */}
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+           <div className="text-xs text-slate-500 font-medium">
+             © 2026 SafaArban Ltd. All Rights Reserved.
+           </div>
+           
+           <div className="flex gap-6">
+              {[Linkedin, Twitter, Instagram].map((Icon, i) => (
+                 <a key={i} href="#" className="text-slate-500 hover:text-white transition-colors">
+                    <Icon size={20} />
+                 </a>
+               ))}
+           </div>
+
+           <div className="flex gap-6 items-center">
+              <button onClick={() => setActivePage('privacy')} className="text-xs text-slate-500 hover:text-white transition-colors">Privacy Policy</button>
+              <button onClick={() => setActivePage('terms')} className="text-xs text-slate-500 hover:text-white transition-colors">Terms of Service</button>
+              <button onClick={() => setActivePage('agreement-generator')} className="text-xs font-bold text-[#E94E4E] hover:text-white transition-colors bg-white/5 px-3 py-1 rounded">AI Agreements</button>
            </div>
         </div>
       </div>

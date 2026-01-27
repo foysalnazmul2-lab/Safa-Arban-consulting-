@@ -1,5 +1,6 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,107 +30,106 @@
     <!-- External Resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://images.unsplash.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#051C2C',
+                            primary: '#0D2B4F',
+                            secondary: '#E94E4E',
+                            accent: '#F7C948',
+                            gold: '#D4AF37',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- HTML2PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            scroll-behavior: smooth;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FAFAFA;
+            color: #1F2933;
         }
+        
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; margin: 0; padding: 0; }
         }
+
         ::selection {
-            background-color: #D4AF37; /* Metallic Champagne */
-            color: #051C2C; /* Deep Regency Blue */
-        }
-        /* Custom Scrollbar for Premium Feel */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #D4AF37;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #b09255;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            background-color: #E94E4E;
+            color: white;
         }
 
-        /* ANIMATION ENGINE */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        /* Premium Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        @keyframes slideUp {
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .glass-panel-dark {
+            background: rgba(13, 43, 79, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes slideInLeft {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes slideInTop {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-
-        .animate-in { animation-fill-mode: forwards; opacity: 0; }
-        .fade-in { animation-name: fadeIn; }
-        .slide-in-from-bottom-4 { animation-name: slideUp; --tw-enter-translate-y: 1rem; }
-        .slide-in-from-bottom-8 { animation-name: slideUp; --tw-enter-translate-y: 2rem; }
-        .slide-in-from-right-4 { animation-name: slideInRight; }
-        .slide-in-from-right-8 { animation-name: slideInRight; }
-        .slide-in-from-left-4 { animation-name: slideInLeft; }
-        .slide-in-from-left-10 { animation-name: slideInLeft; }
-        .slide-in-from-top-2 { animation-name: slideInTop; }
-        .zoom-in-95 { animation-name: zoomIn; }
-        .zoom-in { animation-name: zoomIn; }
         
-        .delay-100 { animation-delay: 100ms; }
-        .delay-200 { animation-delay: 200ms; }
-        .delay-300 { animation-delay: 300ms; }
-        .delay-500 { animation-delay: 500ms; }
-        .duration-200 { animation-duration: 200ms; }
-        .duration-300 { animation-duration: 300ms; }
-        .duration-500 { animation-duration: 500ms; }
-        .duration-700 { animation-duration: 700ms; }
-        .duration-1000 { animation-duration: 1000ms; }
+        .animate-fade-up {
+            animation: fadeUp 0.6s ease-out forwards;
+        }
+        
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
 
-        /* Mask for Marquee */
-        .mask-image-linear-gradient {
-            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        .text-gradient {
+            background: linear-gradient(135deg, #E94E4E 0%, #F7C948 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .text-gradient-gold {
+            background: linear-gradient(135deg, #F7C948 0%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 <script type="importmap">
@@ -142,12 +142,13 @@
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
     "vite": "https://esm.sh/vite@^7.3.1",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "@emailjs/browser": "https://esm.sh/@emailjs/browser@^4.4.1"
+    "@emailjs/browser": "https://esm.sh/@emailjs/browser@^4.4.1",
+    "jspdf": "https://esm.sh/jspdf@^4.0.0"
   }
 }
 </script>
 </head>
-<body class="bg-[#F8F9FA] text-[#051C2C]">
+<body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

@@ -63,7 +63,6 @@ const SECTORS = [
 const SectorFocus: React.FC = () => {
   return (
     <div className="py-24 relative overflow-hidden" style={{ backgroundColor: '#0f172a' }}> 
-       {/* Note: Keeping dark background for this specific section as it uses overlay images, but ensuring text consistency */}
        {/* Background */}
        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
@@ -83,7 +82,7 @@ const SectorFocus: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
              {SECTORS.map((sector) => (
-                <div key={sector.id} className="group relative h-64 rounded-[2rem] overflow-hidden cursor-pointer">
+                <div key={sector.id} className="group relative h-64 rounded-[2rem] overflow-hidden cursor-pointer border border-slate-700 hover:border-slate-500 transition-colors">
                    {/* Background Image */}
                    <img 
                      src={sector.image} 

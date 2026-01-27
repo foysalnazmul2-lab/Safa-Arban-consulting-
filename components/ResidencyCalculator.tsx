@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Crown, CheckCircle, Calculator, Info } from 'lucide-react';
 import { BRAND } from '../constants';
@@ -41,6 +40,11 @@ const ResidencyCalculator: React.FC = () => {
     setPoints(score);
     setIsEligible(score >= 60); // Threshold
   }, [age, degree, experience, salary]);
+
+  // Radius for circle
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (points / 100) * circumference;
 
   return (
     <div className="bg-white py-24 relative overflow-hidden">
@@ -92,7 +96,7 @@ const ResidencyCalculator: React.FC = () => {
                  </div>
                  <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${isEligible ? 'bg-[#006C35] text-white' : 'bg-white/10 text-slate-400'}`}>
                     {isEligible ? <CheckCircle size={12} /> : <Info size={12} />}
-                    {isEligible ? 'Eligible' : 'Check Requirements'}
+                    {isEligible ? 'Eligible' : 'Requirements Not Met'}
                  </div>
               </div>
 
@@ -143,21 +147,43 @@ const ResidencyCalculator: React.FC = () => {
                  </div>
               </div>
 
-              {/* Result Area */}
-              <div className="bg-black/20 rounded-2xl p-6 flex items-center justify-between border border-white/5 mt-8">
-                 <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Score</p>
-                    <p className="text-4xl font-black text-white">{points} <span className="text-sm text-slate-500">/ 100</span></p>
+              {/* Visual Scorecard */}
+              <div className="bg-black/20 rounded-2xl p-6 flex items-center justify-between border border-white/5 mt-8 relative overflow-hidden">
+                 {/* Gauge Visual */}
+                 <div className="relative w-24 h-24 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90">
+                       <circle cx="50%" cy="50%" r={radius} stroke="white" strokeOpacity="0.1" strokeWidth="8" fill="transparent" />
+                       <circle 
+                         cx="50%" cy="50%" r={radius} 
+                         stroke={isEligible ? '#4ade80' : BRAND.colors.secondary} 
+                         strokeWidth="8" fill="transparent" 
+                         strokeDasharray={circumference} 
+                         strokeDashoffset={offset} 
+                         strokeLinecap="round"
+                         className="transition-all duration-1000 ease-out"
+                       />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                       <span className="text-2xl font-black">{points}</span>
+                       <span className="text-[9px] text-white/50">/ 100</span>
+                    </div>
                  </div>
-                 {isEligible ? (
-                    <button className="bg-[#006C35] text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#005a2c] transition-all">
-                       Start Application
-                    </button>
-                 ) : (
-                    <button className="bg-white/10 text-slate-300 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all">
-                       Contact Advisor
-                    </button>
-                 )}
+
+                 <div className="text-right z-10">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                    <p className={`text-xl font-black mb-4 ${isEligible ? 'text-emerald-400' : 'text-slate-300'}`}>
+                       {isEligible ? 'Likely Eligible' : 'Gap Identified'}
+                    </p>
+                    {isEligible ? (
+                        <button className="bg-[#006C35] text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#005a2c] transition-all">
+                        Start Application
+                        </button>
+                    ) : (
+                        <button className="bg-white/10 text-slate-300 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all">
+                        Consult Advisor
+                        </button>
+                    )}
+                 </div>
               </div>
            </div>
         </div>

@@ -1,341 +1,283 @@
 
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, ChevronDown, ChevronUp, Download, ShieldCheck, Globe, Target, Play, X, Quote, Star, Users, Zap, Briefcase } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Quote, 
+  Target, 
+  Building2, 
+  ShieldCheck, 
+  FileText,
+  CheckCircle2,
+  TrendingUp,
+  Award,
+  Globe,
+  Briefcase,
+  Users,
+  Scale,
+  Landmark,
+  ArrowRight,
+  Clock,
+  Zap,
+  MapPin
+} from 'lucide-react';
 import { BRAND } from '../constants';
+import CorporateProfile from './CorporateProfile';
 
-const FAQS = [
+// --- DATA CONFIGURATION ---
+
+const LEADERSHIP = [
   {
-    question: "Do I need a local Saudi partner to start a business?",
-    answer: "No. Under the modern Ministry of Investment (MISA) regulations, foreign investors can own 100% of their company in most sectors, including trading, consulting, and IT, without a local sponsor (Kafeel)."
+    name: "Foysal Nazmul",
+    role: "General Manager",
+    creds: "MISA Liaison • Strategic Planning",
+    bio: "Architect of market entry strategies. Foysal bridges the gap between international investors and Saudi regulatory frameworks, ensuring zero-friction launches.",
+    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop"
   },
   {
-    question: "How long does the MISA licensing process take?",
-    answer: "The MISA investment license itself is typically issued within 24-48 hours after submitting the complete application. However, the full operational setup (Commercial Registration, Tax Files, Bank Account) generally takes 2-4 weeks depending on the entity type."
+    name: "Dr. Sarah Al-Otaibi",
+    role: "Head of Legal",
+    creds: "LLM Corporate Law • MoC Certified",
+    bio: "A guardian of compliance. Dr. Sarah ensures every Articles of Association (AoA) and contract adheres strictly to the evolving Saudi legal code.",
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop"
   },
   {
-    question: "What is the minimum capital requirement?",
-    answer: "For most Service and Commercial licenses, there is no mandatory deposited capital requirement to start. However, MISA generally expects a financial commitment of at least 20,000 - 50,000 SAR for small entities to demonstrate financial viability."
-  },
-  {
-    question: "Can SafaArban help with corporate bank account opening?",
-    answer: "Yes. We have strategic partnerships with tier-1 Saudi banks (SNB, AlRajhi, ANB). We prepare your KYC file, UBO declarations, and schedule the sign-off meeting, significantly reducing the rejection risk."
-  },
-  {
-    question: "What is Saudization (Nitaqat) and how does it affect me?",
-    answer: "Saudization is the national policy requiring companies to hire a certain percentage of Saudi nationals. New foreign entities often get a 'grace period' of 12 months before strict quotas apply. We help you plan your hiring strategy to stay in the 'Green' zone."
+    name: "Eng. Ahmed Zaki",
+    role: "Govt. Relations Director",
+    creds: "Senior PRO • Qiwa Specialist",
+    bio: "The boots on the ground. Ahmed manages high-level relationships with ministry officials to expedite clearances that others can't.",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=800&auto=format&fit=crop"
   }
 ];
 
-// Animated Number Component
-const AnimatedCounter = ({ end, suffix = "", duration = 2000 }: { end: number, suffix?: string, duration?: number }) => {
-  const [count, setCount] = useState(0);
-  
-  useEffect(() => {
-    let startTimestamp: number | null = null;
-    const step = (timestamp: number) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      setCount(Math.floor(progress * end));
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
-    };
-    window.requestAnimationFrame(step);
-  }, [end, duration]);
+const TIMELINE = [
+  { year: "2016", vision: "Vision 2030 Launch", company: "SafaArban Founded", desc: "Established in Riyadh to support early movers." },
+  { year: "2019", vision: "Premium Residency", company: "1st Gold Visa", desc: "Processed inaugural investor residency permits." },
+  { year: "2021", vision: "Shareek Program", company: "Corporate Unit", desc: "Launched dedicated B2B consulting division." },
+  { year: "2024", vision: "RHQ Mandate", company: "RHQ Desk Setup", desc: "Specialized unit for Regional Headquarters." },
+  { year: "2030", vision: "Global Powerhouse", company: "Your Partner", desc: "Scaling your legacy in the Kingdom." }
+];
 
-  return <span>{count.toLocaleString()}{suffix}</span>;
-};
+const WHY_US = [
+  { 
+    title: "Speed to Market", 
+    desc: "We leverage Platinum portal access to cut MISA licensing times by 60%.", 
+    icon: <Zap size={24} />,
+    color: "bg-amber-500",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20"
+  },
+  { 
+    title: "100% Compliance", 
+    desc: "Zero tolerance for regulatory errors. We ensure you are audit-ready from Day 1.", 
+    icon: <ShieldCheck size={24} />,
+    color: "bg-emerald-500",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20"
+  },
+  { 
+    title: "Local Access", 
+    desc: "Direct lines to Ministry officials (MISA, MC, ZATCA) to resolve blockers.", 
+    icon: <Building2 size={24} />,
+    color: "bg-blue-500",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/20"
+  },
+  { 
+    title: "Transparent Pricing", 
+    desc: "No hidden 'service fees'. We separate professional fees from government costs.", 
+    icon: <Scale size={24} />,
+    color: "bg-purple-500",
+    bg: "bg-purple-500/10",
+    border: "border-purple-500/20"
+  }
+];
 
 const About: React.FC = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [isVideoOpen, setIsVideoOpen] = useState(false);
-
-  const toggleFaq = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen font-sans">
-      {/* Hero */}
-      <div className="relative text-white py-32 md:py-48 overflow-hidden" style={{ backgroundColor: BRAND.colors.primary }}>
-         {/* Dynamic Aurora Background */}
-         <div className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full blur-[150px] opacity-20 pointer-events-none animate-pulse" style={{ backgroundColor: BRAND.colors.secondary }}></div>
-         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full blur-[150px] opacity-10 pointer-events-none" style={{ backgroundColor: BRAND.colors.accent }}></div>
+    <div className="bg-slate-50 min-h-screen font-sans overflow-hidden text-[#0A1A2F]">
+      
+      {/* 1. HERO: The Institutional Standard */}
+      <div className="relative pt-32 pb-24 md:pt-48 md:pb-32 bg-[#051C2C] text-white overflow-hidden">
+         {/* Background Effects */}
+         <div className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full blur-[120px] opacity-10" style={{ backgroundColor: BRAND.colors.secondary }}></div>
+         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full blur-[120px] opacity-10" style={{ backgroundColor: BRAND.colors.accent }}></div>
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
          
          <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-            <span className="font-black uppercase tracking-[0.3em] text-[10px] md:text-xs block mb-6 animate-in slide-in-from-bottom-4" style={{ color: BRAND.colors.secondary }}>Established in Riyadh</span>
-            <h1 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter leading-none animate-in slide-in-from-bottom-6 delay-100">
-              The Architects of <br/><span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, #F2D696)` }}>Your Success.</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-8 animate-in slide-in-from-top-4 duration-700">
+               <Award size={14} className="text-[#F2D696]" />
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">Est. 2016 • Riyadh HQ</span>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-[1.1] mb-8">
+               Architects of <br/>
+               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F2D696] to-[#d4af37]">Commercial Sovereignty.</span>
             </h1>
-            <p className="text-lg md:text-2xl text-white/70 max-w-3xl mx-auto font-medium animate-in slide-in-from-bottom-8 delay-200 leading-relaxed">
-              SafaArban is more than a consulting firm; we are the premium bridge between global ambition and Saudi reality.
+            
+            <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed max-w-2xl mx-auto mb-12">
+               SafaArban is the premier government liaison firm for multinational corporations entering Saudi Arabia. We bridge the gap between global ambition and local regulatory compliance.
             </p>
+
+            <button 
+                onClick={() => setIsProfileOpen(true)}
+                className="bg-white text-[#051C2C] px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest hover:bg-[#F2D696] transition-colors flex items-center gap-2 shadow-xl mx-auto group"
+            >
+                <FileText size={16} className="text-[#051C2C] group-hover:scale-110 transition-transform" /> Download Corporate Profile
+            </button>
          </div>
       </div>
-      
-      {/* Values Bento Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-24 -mt-20 relative z-20">
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            {/* Large Feature Card */}
-            <div className="md:col-span-2 bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full blur-3xl opacity-50 group-hover:bg-[#006C35]/10 transition-colors"></div>
-               <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center h-full">
-                  <div className="flex-1">
-                     <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-lg bg-[#006C35] text-white">
-                        <Target size={28} />
-                     </div>
-                     <h3 className="text-2xl font-black mb-4" style={{ color: BRAND.colors.primary }}>Precision Execution</h3>
-                     <p className="text-slate-500 font-medium leading-relaxed">
-                        We operate with a zero-error policy in government filings. Our deep understanding of MISA and MoC regulations ensures your license is approved right the first time, preventing costly delays.
-                     </p>
-                  </div>
-                  <div className="md:w-1/3">
-                     <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center">
-                        <p className="text-4xl font-black" style={{ color: BRAND.colors.accent }}>99.8%</p>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">Accuracy Rate</p>
-                     </div>
-                  </div>
-               </div>
-            </div>
 
-            {/* Standard Cards */}
-            <div className="bg-[#051C2C] p-10 rounded-[2.5rem] shadow-xl border border-slate-800 text-white relative overflow-hidden group">
-               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-               <div className="relative z-10">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-lg bg-white/10 backdrop-blur-md text-[#F26522]">
-                     <Globe size={28} />
-                  </div>
-                  <h3 className="text-xl font-black mb-4">Global Perspective</h3>
-                  <p className="text-white/60 font-medium text-sm leading-relaxed">
-                     Founded by expats, for expats. We speak your language and understand the nuances of international business.
-                  </p>
-               </div>
-            </div>
-
-            <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 group hover:-translate-y-1 transition-transform">
-               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-lg bg-slate-50 text-[#051C2C]">
-                  <ShieldCheck size={28} />
-               </div>
-               <h3 className="text-xl font-black mb-4" style={{ color: BRAND.colors.primary }}>Asset Protection</h3>
-               <p className="text-slate-500 font-medium text-sm leading-relaxed">
-                  Legal frameworks that secure 100% of your ownership, intellectual property, and operational control.
+      {/* 2. THE COUNCIL: Leadership */}
+      <div className="bg-white py-24">
+         <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+               <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4 text-[#C9A86A]">Executive Board</span>
+               <h2 className="text-4xl font-black text-[#051C2C] mb-4">The Council</h2>
+               <p className="text-slate-500 text-sm max-w-2xl mx-auto font-medium">
+                  Decades of combined experience in Saudi corporate law, government relations, and strategic investment.
                </p>
             </div>
 
-            <div className="md:col-span-2 bg-gradient-to-br from-white to-slate-50 p-10 rounded-[2.5rem] shadow-xl border border-slate-100 flex flex-col md:flex-row items-center gap-8">
-               <div className="flex-1">
-                  <div className="flex items-center gap-4 mb-4">
-                     <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-[#F26522] text-white">
-                        <Zap size={28} />
-                     </div>
-                     <h3 className="text-xl font-black" style={{ color: BRAND.colors.primary }}>Velocity</h3>
-                  </div>
-                  <p className="text-slate-500 font-medium text-sm leading-relaxed">
-                     Time is capital. Our fast-track protocols leveraging "Platinum" status with government portals allow for license issuance in as little as 24 hours.
-                  </p>
-               </div>
-               <div className="w-full md:w-auto bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                  <div className="text-center px-4 border-r border-slate-100">
-                     <p className="text-2xl font-black" style={{ color: BRAND.colors.primary }}>24h</p>
-                     <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400">MISA</p>
-                  </div>
-                  <div className="text-center px-4">
-                     <p className="text-2xl font-black" style={{ color: BRAND.colors.primary }}>48h</p>
-                     <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400">CR</p>
-                  </div>
-               </div>
-            </div>
-
-         </div>
-      </div>
-
-      {/* Trajectory / Story Section */}
-      <div className="bg-white py-24 overflow-hidden">
-         <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col lg:flex-row gap-16 items-center">
-               <div className="lg:w-1/2">
-                  <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4" style={{ color: BRAND.colors.accent }}>Our Trajectory</span>
-                  <h2 className="text-4xl md:text-5xl font-black mb-8 tracking-tight" style={{ color: BRAND.colors.primary }}>Catalyzing Vision 2030</h2>
-                  <p className="text-slate-600 leading-relaxed text-lg font-medium mb-8">
-                     Founded in the heart of Riyadh, SafaArban was established to eliminate the procedural friction international firms face when entering the Kingdom. We combine deep local PRO expertise with international business standards.
-                  </p>
-                  
-                  <div className="grid grid-cols-2 gap-6">
-                     <div className="p-4 border-l-4 border-slate-100 pl-6">
-                        <p className="text-3xl font-black" style={{ color: BRAND.colors.primary }}>500+</p>
-                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Entities Established</p>
-                     </div>
-                     <div className="p-4 border-l-4 border-slate-100 pl-6">
-                        <p className="text-3xl font-black" style={{ color: BRAND.colors.primary }}>$2.5B</p>
-                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">FDI Facilitated</p>
-                     </div>
-                  </div>
-               </div>
-               
-               <div className="lg:w-1/2 relative perspective-[1500px]">
-                  <div className="absolute inset-0 rounded-[3rem] rotate-3 opacity-20 blur-xl" style={{ background: `linear-gradient(to right, ${BRAND.colors.secondary}, ${BRAND.colors.alert})` }}></div>
-                  <img 
-                    src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800" 
-                    className="relative rounded-[3rem] shadow-2xl z-10 w-full object-cover h-[500px] transform transition-transform duration-700 hover:rotate-y-6" 
-                    alt="Office Strategy" 
-                  />
-               </div>
-            </div>
-         </div>
-      </div>
-
-      {/* Video Section - "The Vision" */}
-      <div className="py-24 relative overflow-hidden" style={{ backgroundColor: BRAND.colors.primary }}>
-         {/* Background elements */}
-         <div className="absolute top-0 left-0 w-full h-1" style={{ background: `linear-gradient(to right, ${BRAND.colors.secondary}, ${BRAND.colors.alert}, ${BRAND.colors.accent})` }}></div>
-         <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="flex flex-col lg:flex-row gap-16 items-center">
-               <div className="lg:w-1/2">
-                  <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4 flex items-center gap-2" style={{ color: BRAND.colors.secondary }}>
-                     <Play size={12} fill={BRAND.colors.secondary} /> Leadership Message
-                  </span>
-                  <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight leading-tight">
-                     Investing in <br/>
-                     <span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, #F2D696)` }}>The Future Saudi.</span>
-                  </h2>
-                  <p className="text-slate-400 text-lg leading-relaxed font-medium mb-8">
-                     "Our mission goes beyond paperwork. We are building the infrastructure for the next generation of global businesses entering the Kingdom. With Vision 2030, the opportunity is limitless, and SafaArban is your secure bridge."
-                  </p>
-                  <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 bg-slate-700 rounded-full overflow-hidden border-2" style={{ borderColor: BRAND.colors.secondary }}>
-                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200" alt="CEO" className="w-full h-full object-cover" />
-                     </div>
-                     <div>
-                        <p className="text-white font-bold text-sm">Foysal Nazmul</p>
-                        <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: BRAND.colors.secondary }}>Founder & CEO</p>
-                     </div>
-                  </div>
-               </div>
-
-               <div className="lg:w-1/2 relative group cursor-pointer" onClick={() => setIsVideoOpen(true)}>
-                  <div className="absolute inset-0 rounded-[2.5rem] rotate-3 opacity-20 group-hover:rotate-6 transition-transform duration-500" style={{ backgroundColor: BRAND.colors.secondary }}></div>
-                  <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 aspect-video">
-                     <img 
-                        src="https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1200&auto=format&fit=crop" 
-                        alt="SafaArban Office" 
-                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" 
-                     />
-                     <div className="absolute inset-0 bg-[#0A1A2F]/40 flex items-center justify-center group-hover:bg-[#0A1A2F]/20 transition-colors">
-                        <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
-                           <div className="w-14 h-14 rounded-full flex items-center justify-center pl-1 shadow-xl" style={{ backgroundColor: BRAND.colors.secondary }}>
-                              <Play size={24} fill={BRAND.colors.primary} style={{ color: BRAND.colors.primary }} />
+            <div className="grid md:grid-cols-3 gap-8">
+               {LEADERSHIP.map((leader, idx) => (
+                  <div key={idx} className="group relative">
+                     <div className="relative h-[400px] w-full rounded-[2rem] overflow-hidden mb-6 shadow-lg border border-slate-100">
+                        <img 
+                          src={leader.image} 
+                          className="absolute inset-0 w-full h-full object-cover transition-all duration-700 filter grayscale group-hover:grayscale-0 group-hover:scale-105" 
+                          alt={leader.name} 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#051C2C] via-transparent to-transparent opacity-80"></div>
+                        
+                        <div className="absolute bottom-0 left-0 w-full p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                           <div className="bg-[#C9A86A] text-[#051C2C] text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md inline-block mb-3 shadow-md">
+                              {leader.role}
                            </div>
+                           <h3 className="text-2xl font-black text-white mb-2">{leader.name}</h3>
+                           <p className="text-white/80 text-xs font-medium leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 line-clamp-3">
+                              {leader.bio}
+                           </p>
                         </div>
                      </div>
+                     <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">{leader.creds}</p>
                   </div>
-               </div>
-            </div>
-         </div>
-      </div>
-
-      {/* Testimonials */}
-      <div className="py-24 bg-white border-b border-slate-100">
-         <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-               <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4" style={{ color: BRAND.colors.accent }}>Trusted By Leaders</span>
-               <h2 className="text-4xl md:text-5xl font-black tracking-tight" style={{ color: BRAND.colors.primary }}>Client Success Stories</h2>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-               {[
-                 {
-                   quote: "SafaArban navigated the complex MISA licensing process for our tech startup in record time. The transparency was refreshing.",
-                   author: "James Wilson",
-                   role: "CTO, TechFlow UK",
-                   image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200"
-                 },
-                 {
-                   quote: "Their knowledge of the RHQ program saved us millions in tax liabilities. A truly strategic partner for our MENA expansion.",
-                   author: "Sarah Al-Hassan",
-                   role: "Director, Global Logistics",
-                   image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200"
-                 },
-                 {
-                   quote: "From bank account opening to employee visas, the team handled everything. I didn't have to visit a single government office.",
-                   author: "Rahul Mehta",
-                   role: "Founder, Mehta Construction",
-                   image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200"
-                 }
-               ].map((item, i) => (
-                 <div key={i} className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 relative hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-xl">
-                    <Quote className="mb-6 opacity-50" size={32} style={{ color: BRAND.colors.secondary }} />
-                    <p className="text-slate-600 font-medium leading-relaxed mb-8 italic">"{item.quote}"</p>
-                    <div className="flex items-center gap-4 border-t border-slate-200 pt-6">
-                       <img src={item.image} alt={item.author} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" />
-                       <div>
-                          <p className="font-bold text-sm" style={{ color: BRAND.colors.primary }}>{item.author}</p>
-                          <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">{item.role}</p>
-                       </div>
-                       <div className="ml-auto flex gap-0.5">
-                          {[1,2,3,4,5].map(s => <Star key={s} size={12} style={{ color: BRAND.colors.secondary, fill: BRAND.colors.secondary }} />)}
-                       </div>
-                    </div>
-                 </div>
                ))}
             </div>
          </div>
       </div>
 
-      {/* FAQ Section */}
-      <div className="py-24">
-        <div className="max-w-4xl mx-auto px-6">
-            <div className="text-center mb-16">
-                <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4" style={{ color: BRAND.colors.secondary }}>Expert Knowledge</span>
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight" style={{ color: BRAND.colors.primary }}>Common Queries</h2>
-            </div>
+      {/* 3. WHY US: The Checklist */}
+      <div className="py-24 bg-slate-50 border-y border-slate-200">
+         <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row gap-16 items-center">
+               
+               <div className="md:w-1/3">
+                  <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4 text-[#C9A86A]">Competitive Edge</span>
+                  <h2 className="text-4xl font-black text-[#051C2C] mb-6">Why SafaArban?</h2>
+                  <p className="text-slate-500 text-lg leading-relaxed font-medium mb-8">
+                     We don't just process paperwork; we engineer market entry strategies that withstand regulatory shifts.
+                  </p>
+                  <div className="flex items-center gap-3 text-sm font-bold text-[#051C2C] bg-white p-3 rounded-xl border border-slate-100 shadow-sm w-fit">
+                     <CheckCircle2 size={18} className="text-[#C9A86A]" />
+                     <span>500+ Entities Established</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-bold text-[#051C2C] mt-2 bg-white p-3 rounded-xl border border-slate-100 shadow-sm w-fit">
+                     <CheckCircle2 size={18} className="text-[#C9A86A]" />
+                     <span>$2.5B+ Capital Facilitated</span>
+                  </div>
+               </div>
 
-            <div className="space-y-4">
-                {FAQS.map((faq, idx) => (
-                    <div key={idx} className="border border-slate-200 rounded-[2rem] overflow-hidden transition-all duration-300 bg-white hover:shadow-lg group" style={{ borderColor: openIndex === idx ? BRAND.colors.accent : '' }}>
-                        <button 
-                            onClick={() => toggleFaq(idx)}
-                            className="w-full flex items-center justify-between p-6 md:p-8 text-left focus:outline-none"
-                        >
-                            <span className="text-base md:text-lg font-bold pr-8 transition-colors" style={{ color: openIndex === idx ? BRAND.colors.accent : BRAND.colors.primary }}>{faq.question}</span>
-                            {openIndex === idx ? <ChevronUp style={{ color: BRAND.colors.accent }} className="shrink-0" /> : <ChevronDown className="text-slate-400 shrink-0" />}
-                        </button>
-                        <div 
-                            className={`transition-all duration-500 ease-in-out overflow-hidden ${openIndex === idx ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-                        >
-                            <div className="p-6 md:p-8 pt-0 text-slate-600 leading-relaxed font-medium text-sm md:text-base border-t border-slate-50">
-                                {faq.answer}
-                            </div>
+               <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {WHY_US.map((item, idx) => (
+                     <div key={idx} className={`bg-white p-8 rounded-[2rem] shadow-sm border ${item.border} hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group`}>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white mb-6 ${item.color} shadow-lg group-hover:scale-110 transition-transform`}>
+                           {item.icon}
                         </div>
-                    </div>
-                ))}
+                        <h3 className="text-lg font-black text-[#051C2C] mb-3">{item.title}</h3>
+                        <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                           {item.desc}
+                        </p>
+                     </div>
+                  ))}
+               </div>
+
             </div>
-        </div>
+         </div>
       </div>
 
-      {/* Video Modal Overlay */}
-      {isVideoOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-              <button 
-                onClick={() => setIsVideoOpen(false)}
-                className="absolute top-4 right-4 z-20 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-colors"
-              >
-                <X size={24} />
-              </button>
-              <iframe 
-                width="100%" 
-                height="100%" 
-                src="https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1" 
-                title="SafaArban Vision" 
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
-              ></iframe>
-           </div>
-        </div>
-      )}
+      {/* 4. VISION SYNC: The Timeline */}
+      <div className="bg-[#051C2C] py-24 relative overflow-hidden">
+         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+         <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="text-center mb-20">
+               <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-2">Aligned with Vision 2030</h2>
+               <p className="text-slate-400 text-sm font-medium">Our growth mirrors the Kingdom's transformation.</p>
+            </div>
+
+            <div className="relative">
+               {/* Connecting Line */}
+               <div className="absolute top-[2rem] left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#C9A86A] to-transparent opacity-30 hidden md:block"></div>
+               
+               <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+                  {TIMELINE.map((item, idx) => (
+                     <div key={idx} className="group relative flex flex-col items-center text-center">
+                        {/* Dot */}
+                        <div className="w-16 h-16 rounded-full bg-[#0B253A] border-2 border-[#C9A86A] flex items-center justify-center text-[#C9A86A] font-black z-10 mb-6 group-hover:bg-[#C9A86A] group-hover:text-[#051C2C] transition-colors shadow-[0_0_20px_rgba(201,168,106,0.2)] relative">
+                           {item.year}
+                           {/* Pulse effect for current/future years */}
+                           {idx >= 3 && <div className="absolute inset-0 rounded-full animate-ping border border-[#C9A86A] opacity-20"></div>}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="bg-white/5 border border-white/5 p-6 rounded-2xl w-full hover:bg-white/10 transition-colors backdrop-blur-sm">
+                           <span className="text-[#C9A86A] text-[9px] font-black uppercase tracking-widest block mb-2">{item.vision}</span>
+                           <h4 className="text-white font-bold text-sm mb-2">{item.company}</h4>
+                           <p className="text-slate-400 text-xs leading-relaxed">{item.desc}</p>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            </div>
+         </div>
+      </div>
+
+      {/* 5. THE TRUST VAULT */}
+      <div className="bg-white py-20 border-t border-slate-100">
+         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-12">
+            <div className="text-[#051C2C] md:w-1/2">
+               <div className="inline-flex items-center gap-2 mb-6 px-3 py-1 rounded-full bg-[#051C2C] text-white">
+                  <ShieldCheck className="text-[#C9A86A]" size={16} />
+                  <span className="font-bold uppercase tracking-widest text-[10px]">Credentials</span>
+               </div>
+               <h2 className="text-3xl md:text-4xl font-black mb-6">The Trust Vault</h2>
+               <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-md font-medium">
+                  Licensed by the Ministry of Commerce. Certified by the Ministry of Investment. Member of the Riyadh Chamber. Our credentials are your security.
+               </p>
+               <div className="flex gap-8">
+                  <div>
+                     <p className="text-4xl font-black text-[#051C2C]">{BRAND.contact.cr.slice(-4)}</p>
+                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">CR Number</p>
+                  </div>
+                  <div className="w-px h-12 bg-slate-200"></div>
+                  <div>
+                     <p className="text-4xl font-black text-[#051C2C]">100%</p>
+                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Compliance</p>
+                  </div>
+               </div>
+            </div>
+            <div className="md:w-1/2 grid grid-cols-2 gap-4 w-full">
+               {["Ministry of Investment", "Ministry of Commerce", "ZATCA", "Riyadh Chamber"].map((name, i) => (
+                  <div key={i} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center hover:bg-white hover:shadow-xl hover:border-[#051C2C]/10 transition-all group h-32">
+                     <Building2 size={24} className="text-slate-300 mb-3 group-hover:text-[#051C2C] transition-colors" />
+                     <span className="font-bold text-slate-500 text-xs uppercase tracking-wider group-hover:text-[#051C2C] transition-colors">{name}</span>
+                  </div>
+               ))}
+            </div>
+         </div>
+      </div>
+
+      <CorporateProfile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 };

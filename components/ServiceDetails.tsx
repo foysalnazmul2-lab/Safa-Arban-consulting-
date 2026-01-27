@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { CorePageContent } from '../types';
-import { ArrowLeft, CheckCircle2, ArrowRight, ShieldCheck, Check, Info, FileText, Globe, Clock, Zap, Layers, FileCheck, Landmark, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShieldCheck, Check, Info, Clock, Zap, Layers, FileCheck, XCircle, AlertCircle, Globe, FileText } from 'lucide-react';
 import { BRAND } from '../constants';
 
 interface ServiceDetailsProps {
@@ -37,11 +37,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     };
   }, [isActionActive]);
 
-  // Use dynamic details if available, otherwise use a fallback structure or hide the section if appropriate.
-  // For the roadmap visualization, we will prioritize content.details if it exists.
+  // Dynamic roadmap logic based on content
   const roadmapSteps = content.details && content.details.length > 0 
     ? content.details.map((detail, idx) => ({ 
-        title: `Step ${idx + 1}`, 
+        title: `Phase ${idx + 1}`, 
         desc: detail 
       }))
     : [
@@ -51,7 +50,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
         { title: "License Issuance", desc: "Digital handover of your official certificates and QR codes." }
       ];
 
-  // Requirements: Use specific data if available, else a generic placeholder if absolutely necessary (or just generic)
+  // Requirements fallback
   const requirements = content.requirements && content.requirements.length > 0 
     ? content.requirements 
     : [
@@ -112,7 +111,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
           {/* Left Column: Content */}
           <div className="lg:col-span-8 space-y-12">
              
-             {/* Overview Card */}
+             {/* 1. Full Description / Overview */}
              <div className="bg-white rounded-[3rem] p-8 md:p-14 shadow-2xl border border-slate-100 animate-in slide-in-from-bottom-12 duration-700 delay-300">
                 <div className="flex items-center gap-3 mb-8">
                    <div className="p-3 rounded-2xl" style={{ backgroundColor: BRAND.colors.primary, color: BRAND.colors.secondary }}>
@@ -125,7 +124,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 </p>
              </div>
 
-             {/* Scope / Roadmap */}
+             {/* 2. Process Roadmap */}
              <div className="bg-white rounded-[3rem] p-8 md:p-14 border border-slate-100 shadow-lg">
                 <div className="flex items-center gap-3 mb-10">
                    <div className="p-3 rounded-2xl" style={{ backgroundColor: `${BRAND.colors.accent}1A`, color: BRAND.colors.accent }}>
@@ -135,29 +134,20 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 </div>
                 
                 <div className="relative">
-                   {/* Vertical Line */}
-                   <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-100"></div>
-                   
-                   <div className="space-y-8 relative z-10">
+                   <div className="absolute left-[27px] top-4 bottom-4 w-0.5 bg-slate-100"></div>
+                   <div className="space-y-10 relative z-10">
                       {roadmapSteps.map((step, idx) => (
-                        <div key={idx} className="flex gap-6 group">
-                           <div className="w-12 h-12 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-sm font-black text-slate-400 group-hover:text-[#0A1A2F] transition-all shrink-0 shadow-sm"
+                        <div key={idx} className="flex gap-8 group">
+                           <div className="w-14 h-14 rounded-2xl bg-white border-2 border-slate-100 flex items-center justify-center text-sm font-black text-slate-400 group-hover:text-white transition-all shrink-0 shadow-sm relative z-10"
                                 style={{ borderColor: 'transparent' }}
                                 onMouseOver={(e) => { e.currentTarget.style.borderColor = BRAND.colors.secondary; e.currentTarget.style.backgroundColor = BRAND.colors.secondary; }}
                                 onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.backgroundColor = 'white'; }}
                            >
                               {idx + 1}
                            </div>
-                           <div className="pt-2">
-                              {/* If content.details is used, we might not have 'title' distinct from desc, so we can make desc primary */}
-                              {content.details ? (
-                                <p className="text-base text-slate-700 font-bold leading-relaxed">{step.desc}</p>
-                              ) : (
-                                <>
-                                  <h4 className="text-lg font-bold mb-1 transition-colors" style={{ color: BRAND.colors.primary }}>{step.title}</h4>
-                                  <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
-                                </>
-                              )}
+                           <div className="pt-1">
+                              <h4 className="text-sm font-bold uppercase tracking-widest mb-2 transition-colors" style={{ color: BRAND.colors.secondary }}>{step.title}</h4>
+                              <p className="text-lg text-slate-700 font-bold leading-relaxed">{step.desc}</p>
                            </div>
                         </div>
                       ))}
@@ -165,13 +155,13 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 </div>
              </div>
 
-             {/* Requirements & Inclusions Grid */}
+             {/* 3. Requirements & Inclusions Grid */}
              <div className="grid md:grid-cols-2 gap-8">
                 {/* Requirements */}
-                <div className="rounded-[2.5rem] p-8 text-white relative overflow-hidden" style={{ backgroundColor: BRAND.colors.primary }}>
+                <div className="rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-xl" style={{ backgroundColor: BRAND.colors.primary }}>
                    <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[60px] opacity-10" style={{ backgroundColor: BRAND.colors.secondary }}></div>
                    <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2" style={{ color: BRAND.colors.secondary }}>
-                      <FileCheck size={16} /> Required Documents
+                      <FileCheck size={16} /> Requirements
                    </h3>
                    <ul className="space-y-4">
                       {requirements.map((req, i) => (
@@ -184,38 +174,43 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 </div>
 
                 {/* Inclusions */}
-                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 flex flex-col h-full">
-                   <div>
-                     <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2" style={{ color: BRAND.colors.accent }}>
-                        <CheckCircle2 size={16} /> Included Benefits
-                     </h3>
-                     <ul className="space-y-4 mb-8">
-                        {content.features.map((feat, i) => (
-                          <li key={i} className="flex items-start gap-3 text-sm font-bold" style={{ color: BRAND.colors.primary }}>
-                             <Check size={16} className="mt-0.5 shrink-0" style={{ color: BRAND.colors.accent }} />
-                             {feat.title}
-                          </li>
-                        ))}
-                     </ul>
-                   </div>
-                   
-                   {/* Exclusions */}
-                   {content.exclusions && content.exclusions.length > 0 && (
-                     <div className="mt-auto pt-6 border-t border-slate-100">
-                       <h3 className="text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-slate-400">
-                          <XCircle size={12} /> Exclusions
-                       </h3>
-                       <ul className="space-y-2">
-                          {content.exclusions.map((exc, i) => (
-                            <li key={i} className="flex items-start gap-2 text-xs font-medium text-slate-500">
-                               <span className="text-slate-300">•</span> {exc}
-                            </li>
-                          ))}
-                       </ul>
-                     </div>
-                   )}
+                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 flex flex-col h-full shadow-lg">
+                   <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2" style={{ color: BRAND.colors.accent }}>
+                      <CheckCircle2 size={16} /> What's Included
+                   </h3>
+                   <ul className="space-y-4 mb-8">
+                      {content.features.map((feat, i) => (
+                        <li key={i} className="flex items-start gap-3 text-sm font-bold" style={{ color: BRAND.colors.primary }}>
+                           <Check size={16} className="mt-0.5 shrink-0" style={{ color: BRAND.colors.accent }} />
+                           <div>
+                              <span>{feat.title}</span>
+                              <p className="text-[10px] text-slate-400 font-normal mt-0.5">{feat.desc}</p>
+                           </div>
+                        </li>
+                      ))}
+                   </ul>
                 </div>
              </div>
+
+             {/* 4. Exclusions (Explicitly Separated) */}
+             {content.exclusions && content.exclusions.length > 0 && (
+                <div className="bg-slate-50 rounded-[2.5rem] p-8 md:p-10 border border-slate-200">
+                   <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2 text-slate-500">
+                      <AlertCircle size={16} className="text-slate-400" /> Exclusions & Client Responsibility
+                   </h3>
+                   <div className="grid md:grid-cols-2 gap-4">
+                      {content.exclusions.map((exc, i) => (
+                        <div key={i} className="flex items-center gap-3 bg-white p-4 rounded-xl border border-slate-100 text-sm font-medium text-slate-600 shadow-sm">
+                           <XCircle size={16} className="shrink-0 text-red-400" />
+                           {exc}
+                        </div>
+                      ))}
+                   </div>
+                   <p className="text-[10px] text-slate-400 mt-6 text-center">
+                      * Government fees are payable at actuals directly to the relevant authority via SADAD.
+                   </p>
+                </div>
+             )}
 
              {/* Guarantee Strip */}
              <div className="rounded-[2.5rem] p-10 md:p-12 text-white relative overflow-hidden shadow-2xl" style={{ background: `linear-gradient(to right, ${BRAND.colors.primary}, #1a3a5f)` }}>

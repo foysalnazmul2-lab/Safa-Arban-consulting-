@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Building2, UserCheck, CreditCard, Flag, ArrowRight } from 'lucide-react';
 import { BRAND } from '../constants';
 
@@ -8,35 +7,35 @@ const STEPS = [
     day: "Day 1-2",
     title: "Strategic Alignment",
     icon: <FileText size={20} />,
-    desc: "We analyze your business model to select the precise ISIC-4 activity codes, ensuring 100% foreign ownership eligibility.",
+    desc: "We analyze your business model to select the correct ISIC activity codes, ensuring 100% foreign ownership eligibility.",
     status: "Preparation"
   },
   {
     day: "Day 3-5",
     title: "MISA Licensing",
     icon: <Building2 size={20} />,
-    desc: "Submission of the 'Business Innovation Plan' and financial data to the Ministry of Investment. License issuance typically within 24 hours of approval.",
+    desc: "Submission and approval of your Investment License. This is your 'Golden Ticket' to the Saudi market.",
     status: "Milestone"
   },
   {
     day: "Day 6-8",
     title: "Commercial Registration",
     icon: <UserCheck size={20} />,
-    desc: "Trade name reservation and Commercial Registration (CR) issuance via Ministry of Commerce. Chamber of Commerce membership activation.",
+    desc: "Official legal incorporation. Your company becomes a recognized entity in the Kingdom.",
     status: "Legal Identity"
   },
   {
     day: "Day 9-14",
     title: "Government Integration",
     icon: <Building2 size={20} />,
-    desc: "Opening files with ZATCA (Tax), Ministry of Labor (Qiwa), and GOSI (Social Insurance). National Address registration.",
+    desc: "Activation of 700-files, National Address, and Chamber of Commerce membership.",
     status: "Compliance"
   },
   {
     day: "Day 15-25",
     title: "Banking & GM Visa",
     icon: <CreditCard size={20} />,
-    desc: "Corporate bank account opening (KYC/UBO). Issuance of Investor Visa/Iqama for the General Manager.",
+    desc: "Opening your corporate bank account and issuing the General Manager's residency (Iqama).",
     status: "Operational"
   },
   {
@@ -51,6 +50,14 @@ const STEPS = [
 const JourneyTimeline: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
 
+  // Auto-advance timeline on mobile for visual interest
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % STEPS.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="bg-white py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
@@ -64,7 +71,7 @@ const JourneyTimeline: React.FC = () => {
            </p>
         </div>
 
-        {/* Desktop Timeline */}
+        {/* Desktop Timeline (Horizontal) */}
         <div className="hidden lg:block relative">
            {/* Connecting Line */}
            <div className="absolute top-12 left-0 w-full h-1 bg-slate-100 rounded-full"></div>
@@ -81,7 +88,7 @@ const JourneyTimeline: React.FC = () => {
                   onMouseEnter={() => setActiveStep(idx)}
                 >
                    <div className="flex flex-col items-center">
-                      <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center transition-all duration-300 bg-white mb-6 ${
+                      <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center transition-all duration-300 bg-white mb-6 relative ${
                         idx <= activeStep 
                         ? 'shadow-xl scale-110' 
                         : 'border-slate-100 text-slate-300'
@@ -90,6 +97,10 @@ const JourneyTimeline: React.FC = () => {
                           borderColor: idx <= activeStep ? BRAND.colors.secondary : '#e2e8f0',
                           color: idx <= activeStep ? BRAND.colors.primary : '#cbd5e1'
                       }}>
+                         {/* Pulse Ring for Active Step */}
+                         {idx === activeStep && (
+                            <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ backgroundColor: BRAND.colors.secondary }}></span>
+                         )}
                          {step.icon}
                       </div>
                       
@@ -139,35 +150,39 @@ const JourneyTimeline: React.FC = () => {
         </div>
 
         {/* Mobile Vertical Timeline */}
-        <div className="lg:hidden space-y-8 relative">
-           <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-100"></div>
+        <div className="lg:hidden relative pl-4">
+           {/* Vertical Line */}
+           <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-100"></div>
            
-           {STEPS.map((step, idx) => (
-             <div key={idx} className="relative pl-16">
-                <div className={`absolute left-0 w-12 h-12 rounded-full border-2 flex items-center justify-center bg-white z-10 ${
-                   idx === activeStep ? 'shadow-lg' : 'border-slate-200 text-slate-300'
-                }`}
-                style={{ 
-                    borderColor: idx === activeStep ? BRAND.colors.secondary : '#e2e8f0',
-                    color: idx === activeStep ? BRAND.colors.primary : '#cbd5e1'
-                }}>
-                   {step.icon}
-                </div>
-                <div 
-                  className={`bg-slate-50 p-6 rounded-2xl border transition-all ${
-                    idx === activeStep ? 'shadow-md' : 'border-slate-100'
+           <div className="space-y-8">
+             {STEPS.map((step, idx) => (
+               <div key={idx} className="relative pl-16 group" onClick={() => setActiveStep(idx)}>
+                  <div className={`absolute left-4 -translate-x-1/2 w-12 h-12 rounded-full border-2 flex items-center justify-center bg-white z-10 transition-all ${
+                     idx === activeStep ? 'shadow-lg scale-110' : 'border-slate-200 text-slate-300'
                   }`}
-                  style={{ borderColor: idx === activeStep ? BRAND.colors.secondary : '#e2e8f0' }}
-                  onClick={() => setActiveStep(idx)}
-                >
-                   <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold" style={{ color: BRAND.colors.primary }}>{step.title}</h4>
-                      <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: BRAND.colors.accent }}>{step.day}</span>
-                   </div>
-                   <p className="text-xs text-slate-500 leading-relaxed">{step.desc}</p>
-                </div>
-             </div>
-           ))}
+                  style={{ 
+                      borderColor: idx === activeStep ? BRAND.colors.secondary : '#e2e8f0',
+                      color: idx === activeStep ? BRAND.colors.primary : '#cbd5e1'
+                  }}>
+                     {idx === activeStep && (
+                        <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ backgroundColor: BRAND.colors.secondary }}></span>
+                     )}
+                     {React.cloneElement(step.icon as React.ReactElement<any>, { size: 16 })}
+                  </div>
+                  <div 
+                    className={`bg-slate-50 p-6 rounded-2xl border transition-all ${
+                      idx === activeStep ? 'shadow-md border-[#E94E4E]/30 bg-white' : 'border-slate-100'
+                    }`}
+                  >
+                     <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-bold" style={{ color: BRAND.colors.primary }}>{step.title}</h4>
+                        <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: BRAND.colors.accent }}>{step.day}</span>
+                     </div>
+                     <p className="text-xs text-slate-500 leading-relaxed">{step.desc}</p>
+                  </div>
+               </div>
+             ))}
+           </div>
         </div>
 
       </div>

@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ShoppingCart, Search, Globe, User, LogIn, DollarSign } from 'lucide-react';
+import { Menu, X, ShoppingCart, Search, Globe, User, LogIn, DollarSign, ChevronDown } from 'lucide-react';
 import { Page } from '../types.ts';
 import { BRAND } from '../constants.ts';
 import { SafaArbanLogo } from './Logo.tsx';
+import { useLanguage } from '../LanguageContext';
 
 interface NavbarProps {
   activePage: Page;
@@ -16,7 +18,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, cartCount, onOpenTracker, currency = 'SAR', onToggleCurrency }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [lang, setLang] = useState<'EN' | 'AR'>('EN');
+  const { lang, toggleLanguage, t, isRTL } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -25,188 +27,156 @@ const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, cartCount, o
   }, []);
 
   const navLinks = [
-    { id: 'home' as Page, label: 'Home' },
-    { id: 'services' as Page, label: 'Services' },
-    { id: 'blog' as Page, label: 'Insights' },
-    { id: 'about' as Page, label: 'About' },
-    { id: 'contact' as Page, label: 'Contact' },
+    { id: 'home' as Page, labelKey: 'nav_home' },
+    { id: 'services' as Page, labelKey: 'nav_services' },
+    { id: 'about' as Page, labelKey: 'nav_about' },
+    { id: 'blog' as Page, labelKey: 'nav_insights' },
+    { id: 'contact' as Page, labelKey: 'nav_contact' },
   ];
 
+  const handleNavigation = (id: Page) => {
+    setIsOpen(false);
+    setActivePage(id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-500 no-print border-b ${
-      scrolled 
-      ? `bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg py-0` 
-      : `bg-white border-transparent py-3`
-    }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center">
-          {/* Brand Logo */}
-          <div 
-            className="flex items-center cursor-pointer group py-2" 
-            onClick={() => setActivePage('home')}
-          >
-            <SafaArbanLogo className="h-9 md:h-11 w-auto transition-transform duration-300 group-hover:scale-[1.02]" />
-          </div>
-
-          {/* Desktop Nav */}
-          <div className="hidden xl:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => setActivePage(link.id)}
-                className={`relative text-[11px] font-bold uppercase tracking-[0.15em] py-2 transition-all duration-300 group overflow-hidden ${
-                  activePage === link.id ? `text-[${BRAND.colors.secondary}]` : 'text-slate-500 hover:text-[#051C2C]'
-                }`}
-                style={{ color: activePage === link.id ? BRAND.colors.secondary : undefined }}
-              >
-                <span className="relative z-10">{link.label}</span>
-                <span 
-                  className={`absolute bottom-0 left-0 w-full h-0.5 transform transition-transform duration-300 origin-center ${activePage === link.id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50'}`}
-                  style={{ backgroundColor: BRAND.colors.secondary }}
-                ></span>
-              </button>
-            ))}
+    <>
+      <nav 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 no-print ${
+          scrolled 
+          ? 'py-3 px-4 md:px-8' 
+          : 'py-6 px-6 md:px-12'
+        }`}
+      >
+        <div 
+          className={`max-w-7xl mx-auto rounded-full transition-all duration-500 ${
+            scrolled 
+            ? 'bg-brand-dark/90 backdrop-blur-xl border border-white/10 shadow-2xl px-6 py-3' 
+            : 'bg-transparent px-0 py-2'
+          }`}
+        >
+          <div className={`flex justify-between items-center ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
             
-            <div className="h-6 w-px bg-slate-200 mx-2"></div>
+            {/* Brand Logo */}
+            <div 
+              className="flex items-center cursor-pointer group" 
+              onClick={() => handleNavigation('home')}
+            >
+              <SafaArbanLogo className="h-8 md:h-10 w-auto transition-transform duration-300 group-hover:scale-[1.02]" variant="white" />
+            </div>
 
-            <div className="flex items-center gap-3">
-               {/* Language Toggle */}
-               <button 
-                 onClick={() => setLang(lang === 'EN' ? 'AR' : 'EN')}
-                 className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#051C2C] transition-colors"
-               >
-                 <Globe size={12} /> {lang}
-               </button>
+            {/* Desktop Nav */}
+            <div className="hidden lg:flex items-center gap-8 rtl:flex-row-reverse">
+              {navLinks.map((link) => (
+                <button
+                  key={link.id}
+                  onClick={() => handleNavigation(link.id)}
+                  className={`relative text-xs font-bold uppercase tracking-widest transition-all duration-300 group ${
+                    activePage === link.id 
+                    ? 'text-brand-secondary' 
+                    : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {t(link.labelKey as any)}
+                  <span className={`absolute -bottom-1 left-0 w-full h-0.5 bg-brand-secondary transform transition-transform duration-300 origin-left ${activePage === link.id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+                </button>
+              ))}
+            </div>
 
-               {/* Currency Toggle */}
-               {onToggleCurrency && (
-                 <button 
-                   onClick={onToggleCurrency}
-                   className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[${BRAND.colors.secondary}] transition-colors"
-                   style={{ '--hover-color': BRAND.colors.secondary } as React.CSSProperties}
-                 >
-                   <DollarSign size={12} /> {currency}
-                 </button>
-               )}
+            {/* Actions */}
+            <div className="hidden lg:flex items-center gap-4 rtl:flex-row-reverse">
+               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                   <button onClick={toggleLanguage} className="text-[10px] font-black uppercase text-slate-300 hover:text-white transition-colors">
+                       {lang}
+                   </button>
+                   <div className="w-px h-3 bg-white/10"></div>
+                   {onToggleCurrency && (
+                       <button onClick={onToggleCurrency} className="text-[10px] font-black uppercase text-slate-300 hover:text-white transition-colors">
+                           {currency}
+                       </button>
+                   )}
+               </div>
 
-               {/* Client Portal */}
                <button 
                  onClick={onOpenTracker}
-                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all group active:scale-95"
+                 className="p-2 text-slate-300 hover:text-white transition-colors"
+                 title={t('nav_portal')}
                >
-                 <User size={12} style={{ color: BRAND.colors.secondary }} />
-                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600 group-hover:text-[#051C2C]">Portal</span>
+                 <User size={18} />
                </button>
 
                <button 
                  onClick={() => setActivePage('quotation')}
-                 className="relative p-2.5 rounded-full bg-slate-50 hover:text-[#0A1A2F] text-slate-600 transition-all duration-300 group border border-slate-200 active:scale-95"
-                 aria-label="View Quotation"
+                 className="relative p-2 text-slate-300 hover:text-white transition-colors group"
                >
-                 <ShoppingCart size={16} />
+                 <ShoppingCart size={18} />
                  {cartCount > 0 && (
-                   <span className="absolute -top-1 -right-1 text-white text-[9px] font-black rounded-full h-3.5 w-3.5 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform" style={{ backgroundColor: BRAND.colors.secondary }}>
+                   <span className="absolute -top-1 -right-1 h-4 w-4 bg-brand-secondary text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                      {cartCount}
                    </span>
                  )}
                </button>
 
                <button 
-                 onClick={() => setActivePage('services')}
-                 className="text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-[0_0_20px_rgba(242,101,34,0.3)] transform hover:-translate-y-0.5 border active:scale-95"
-                 style={{ 
-                   backgroundColor: BRAND.colors.secondary,
-                   borderColor: BRAND.colors.secondary
-                 }}
+                 onClick={() => handleNavigation('services')}
+                 className="bg-brand-secondary hover:bg-red-600 text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-red-900/20 active:scale-95"
                >
-                 Start Setup
+                 {t('nav_start')}
                </button>
             </div>
-          </div>
 
-          {/* Mobile Toggle */}
-          <div className="xl:hidden flex items-center gap-4">
-             <button 
-                onClick={() => setActivePage('quotation')} 
-                className="relative p-2 text-slate-600 hover:text-[${BRAND.colors.secondary}] transition-colors"
-                style={{ color: BRAND.colors.primary }}
-             >
-                <ShoppingCart size={22} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 text-white text-[9px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center shadow-md" style={{ backgroundColor: BRAND.colors.secondary }}>
-                    {cartCount}
-                  </span>
-                )}
-             </button>
-            <button 
-              onClick={() => setIsOpen(!isOpen)} 
-              className="p-2 text-[#051C2C] transition-colors hover:bg-slate-100 rounded-lg active:scale-90"
-            >
-              {isOpen ? <X size={26} /> : <Menu size={26} />}
-            </button>
+            {/* Mobile Toggle */}
+            <div className="lg:hidden flex items-center gap-4">
+               <button 
+                  onClick={() => setActivePage('quotation')} 
+                  className="relative p-2 text-slate-300 hover:text-white"
+               >
+                  <ShoppingCart size={20} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-brand-secondary rounded-full border border-brand-dark"></span>
+                  )}
+               </button>
+              <button 
+                onClick={() => setIsOpen(!isOpen)} 
+                className="p-2 text-white"
+              >
+                {isOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </nav>
 
       {/* Mobile Menu Overlay */}
       <div 
-        className={`fixed inset-0 z-40 transition-all duration-500 xl:hidden flex flex-col pt-24 px-8 ${
-          isOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-4'
+        className={`fixed inset-0 z-40 bg-brand-dark transition-all duration-500 lg:hidden flex flex-col pt-32 px-8 ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
-        style={{ backgroundColor: `white` }}
       >
-        <div className="space-y-2">
+        <div className="space-y-4">
           {navLinks.map((link, idx) => (
             <button
               key={link.id}
-              onClick={() => { setActivePage(link.id); setIsOpen(false); }}
-              className={`block w-full text-left text-2xl font-black tracking-tighter py-4 border-b border-slate-100 transition-all duration-300 active:scale-98 ${
-                activePage === link.id ? 'translate-x-4' : 'text-[#051C2C] hover:text-slate-500'
-              }`}
-              style={{ 
-                color: activePage === link.id ? BRAND.colors.secondary : '#051C2C',
-                transitionDelay: `${idx * 50}ms` 
-              }}
+              onClick={() => handleNavigation(link.id)}
+              className="block w-full text-left text-3xl font-serif text-white hover:text-brand-secondary transition-colors"
+              style={{ transitionDelay: `${idx * 50}ms` }}
             >
-              {link.label}
+              {t(link.labelKey as any)}
             </button>
           ))}
-          
-          <div className="pt-8 grid grid-cols-2 gap-4">
-             <button 
-               onClick={() => { onOpenTracker && onOpenTracker(); setIsOpen(false); }}
-               className="flex items-center justify-center gap-2 py-4 bg-slate-50 rounded-2xl text-[#051C2C] font-bold text-xs uppercase tracking-widest border border-slate-100 active:bg-slate-100"
-             >
-               <LogIn size={16} style={{ color: BRAND.colors.secondary }} /> Client Portal
-             </button>
-             {onToggleCurrency && (
-               <button 
-                 onClick={onToggleCurrency}
-                 className="flex items-center justify-center gap-2 py-4 bg-slate-50 rounded-2xl text-[#051C2C] font-bold text-xs uppercase tracking-widest border border-slate-100 active:bg-slate-100"
-               >
-                 <DollarSign size={16} style={{ color: BRAND.colors.secondary }} /> {currency}
-               </button>
-             )}
-          </div>
-
-          <button 
-            onClick={() => { setActivePage('services'); setIsOpen(false); }}
-            className="w-full text-white py-5 rounded-2xl font-black uppercase tracking-widest text-sm mt-6 shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ backgroundColor: BRAND.colors.secondary }}
-          >
-            Start Your Business
-          </button>
         </div>
         
-        <div className="mt-auto pb-10 flex flex-col items-center">
-          <SafaArbanLogo className="h-8 w-auto opacity-50 mb-4" />
-          <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest text-center">
-            Riyadh • London • Dubai
-          </p>
+        <div className="mt-12 pt-12 border-t border-white/10 grid grid-cols-2 gap-4">
+           <button onClick={toggleLanguage} className="flex items-center gap-2 text-slate-400 hover:text-white">
+               <Globe size={16} /> {lang === 'EN' ? 'Arabic' : 'English'}
+           </button>
+           <button onClick={onOpenTracker} className="flex items-center gap-2 text-slate-400 hover:text-white">
+               <User size={16} /> Portal
+           </button>
         </div>
       </div>
-    </nav>
+    </>
   );
 };
 

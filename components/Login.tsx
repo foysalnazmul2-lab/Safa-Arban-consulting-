@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 import { Shield, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { BRAND } from '../constants';
 import { SafaArbanLogo } from './Logo.tsx';
+import { useLanguage } from '../LanguageContext';
 
 interface LoginProps {
-  onLogin: (email: string) => void;
+  onLogin: (email: string, role?: 'client' | 'admin') => void;
   onBack: () => void;
 }
 
@@ -13,26 +15,30 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t, isRTL } = useLanguage();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    // Simulated Auth Delay
+    // Simulated Auth Logic
     setTimeout(() => {
-      if (email && password) {
+      if (email.toLowerCase() === 'admin@safaarban.com' && password === 'admin123') {
+         setIsLoading(false);
+         onLogin(email, 'admin');
+      } else if (email && password) {
         setIsLoading(false);
-        onLogin(email);
+        onLogin(email, 'client');
       } else {
         setIsLoading(false);
-        setError('Please enter valid credentials.');
+        setError(t('login_error'));
       }
     }, 1500);
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#F8F9FA]">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#F8F9FA]" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Visual Side */}
       <div className="md:w-1/2 bg-[#051C2C] relative overflow-hidden flex flex-col justify-between p-12 text-white">
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
@@ -47,10 +53,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
                <SafaArbanLogo className="h-10 w-auto" variant="white" />
             </div>
             <h1 className="text-5xl font-black leading-tight mb-6">
-               Secure Client <br/><span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, #F2D696)` }}>Portal Access</span>
+               {t('login_title')}
             </h1>
             <p className="text-lg text-white/60 max-w-md font-medium leading-relaxed">
-               Manage your MISA licenses, track visa applications, and communicate with your dedicated PRO consultant in one secure dashboard.
+               {t('login_subtitle')}
             </p>
          </div>
 
@@ -66,40 +72,40 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
       {/* Login Form */}
       <div className="md:w-1/2 flex items-center justify-center p-8 md:p-12">
          <div className="w-full max-w-md space-y-8">
-            <div className="text-center md:text-left">
-               <h2 className="text-3xl font-black text-[#051C2C] mb-2">Welcome Back</h2>
-               <p className="text-slate-500 text-sm font-medium">Enter your credentials to access the workspace.</p>
+            <div className="text-center md:text-left rtl:text-right">
+               <h2 className="text-3xl font-black text-[#051C2C] mb-2">{t('login_welcome')}</h2>
+               <p className="text-slate-500 text-sm font-medium">{t('login_instruction')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
                <div className="space-y-4">
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Corporate Email</label>
+                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('login_email_label')}</label>
                      <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#F26522] transition-colors" size={18} />
+                        <Mail className={`absolute top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#F26522] transition-colors ${isRTL ? 'right-4' : 'left-4'}`} size={18} />
                         <input 
                           type="email" 
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="name@company.com"
-                          className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 transition-all font-bold text-sm text-[#051C2C]"
+                          className={`w-full py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 transition-all font-bold text-sm text-[#051C2C] ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'}`}
                           style={{ '--tw-ring-color': `${BRAND.colors.secondary}4D` } as React.CSSProperties}
                         />
                      </div>
                   </div>
 
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Password</label>
+                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('login_password_label')}</label>
                      <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#F26522] transition-colors" size={18} />
+                        <Lock className={`absolute top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#F26522] transition-colors ${isRTL ? 'right-4' : 'left-4'}`} size={18} />
                         <input 
                           type="password" 
                           required
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 transition-all font-bold text-sm text-[#051C2C]"
+                          className={`w-full py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 transition-all font-bold text-sm text-[#051C2C] ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'}`}
                           style={{ '--tw-ring-color': `${BRAND.colors.secondary}4D` } as React.CSSProperties}
                         />
                      </div>
@@ -126,17 +132,17 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
                  className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs text-white shadow-xl transition-all flex items-center justify-center gap-2 hover:shadow-2xl hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
                  style={{ backgroundColor: BRAND.colors.primary }}
                >
-                 {isLoading ? <Loader2 size={18} className="animate-spin" /> : <>Access Dashboard <ArrowRight size={16} /></>}
+                 {isLoading ? <Loader2 size={18} className="animate-spin" /> : <>{t('login_btn')} <ArrowRight size={16} className={isRTL ? 'rotate-180' : ''} /></>}
                </button>
             </form>
 
             <div className="pt-8 border-t border-slate-100 text-center">
-               <p className="text-xs text-slate-400 font-medium mb-4">New to SafaArban?</p>
+               <p className="text-xs text-slate-400 font-medium mb-4">{t('login_new')}</p>
                <button 
                  onClick={onBack} 
                  className="text-[#051C2C] font-black text-xs uppercase tracking-widest border border-slate-200 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all"
                >
-                 Start New Application
+                 {t('login_create')}
                </button>
             </div>
          </div>

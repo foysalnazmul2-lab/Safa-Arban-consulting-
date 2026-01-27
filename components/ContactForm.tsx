@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Mail, Phone, User, Building, MessageSquare, Send, AlertCircle, CheckCircle, Loader2, Clock, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, User, Briefcase, MapPin, Send, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { BRAND } from '../constants';
 
 const ContactForm: React.FC = () => {
@@ -9,34 +9,26 @@ const ContactForm: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    company: '',
+    businessType: '',
+    status: '',
     message: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
-    // Name Validation
     if (!formData.name.trim()) newErrors.name = "Full name is required.";
-    else if (formData.name.length < 3) newErrors.name = "Name must be at least 3 characters.";
-
-    // Email Validation (Robust Regex)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) newErrors.email = "Email address is required.";
-    else if (!emailRegex.test(formData.email)) newErrors.email = "Please enter a valid email address.";
-
-    // Phone Validation
-    const phoneRegex = /^[0-9+\-\s()]{8,}$/;
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
-    else if (!phoneRegex.test(formData.phone)) newErrors.phone = "Please enter a valid phone number.";
-
-    // Message Validation
-    if (!formData.message.trim()) newErrors.message = "Please describe your inquiry.";
-    else if (formData.message.length < 10) newErrors.message = "Message is too short.";
+    if (!formData.email.trim()) newErrors.email = "Email is required.";
+    else if (!emailRegex.test(formData.email)) newErrors.email = "Invalid email format.";
+    if (!formData.phone.trim()) newErrors.phone = "WhatsApp number is required.";
+    if (!formData.businessType.trim()) newErrors.businessType = "Business activity is required.";
+    if (!formData.status) newErrors.status = "Please select your current status.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -47,33 +39,54 @@ const ContactForm: React.FC = () => {
     if (!validate()) return;
 
     setIsSubmitting(true);
+    setServerError('');
     
-    // Prepare payload for Backend API
-    const payload = {
-      ...formData,
-      submittedAt: new Date().toISOString(),
-      metadata: {
-        source: 'web_contact_form',
-        locale: navigator.language
-      }
-    };
-
     try {
-      // Simulation of network latency and successful server response
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log("Secure Payload Transmitted:", payload);
-      
-      setSubmitSuccess(true);
-      setFormData({ name: '', email: '', phone: '', company: '', message: '' });
+      // Create FormData to send to PHP script
+      const data = new FormData();
+      data.append('type', 'contact');
+      data.append('name', formData.name);
+      data.append('email', formData.email);
+      data.append('phone', formData.phone);
+      data.append('businessType', formData.businessType);
+      data.append('status', formData.status);
+      data.append('message', formData.message);
+
+      // Perform POST request
+      const response = await fetch('/send_mail.php', {
+        method: 'POST',
+        body: data,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'success') {
+        // Save to LocalStorage for Admin Portal Demo functionality
+        const newLead = {
+          id: `LD-${Date.now()}`,
+          ...formData,
+          date: new Date().toISOString(),
+          type: 'Inquiry',
+          status: 'New'
+        };
+        const existingLeads = JSON.parse(localStorage.getItem('safa_leads') || '[]');
+        localStorage.setItem('safa_leads', JSON.stringify([newLead, ...existingLeads]));
+
+        // Trigger Success View (SPA Redirection)
+        setSubmitSuccess(true);
+        setFormData({ name: '', email: '', phone: '', businessType: '', status: '', message: '' });
+      } else {
+        setServerError(result.message || "Failed to send message. Please try again.");
+      }
     } catch (error) {
       console.error('Submission Error:', error);
+      setServerError("Connection error. Please check your internet.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -86,63 +99,32 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-[4rem] p-8 md:p-14 shadow-2xl border border-slate-100 relative overflow-hidden group">
+    <div className="bg-slate-800 rounded-[4rem] p-8 md:p-14 shadow-2xl border border-slate-700 relative overflow-hidden group">
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[100px] opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity duration-700" style={{ backgroundColor: BRAND.colors.secondary }}></div>
       <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-[100px] opacity-5 pointer-events-none" style={{ backgroundColor: BRAND.colors.accent }}></div>
 
       <div className="text-center mb-12 relative z-10">
         <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4" style={{ color: BRAND.colors.alert }}>Priority Channel</span>
-        <h2 className="text-4xl font-black mb-4 tracking-tighter" style={{ color: BRAND.colors.primary }}>Direct Inquiry</h2>
-        <p className="text-slate-500 text-sm max-w-lg mx-auto font-medium">
+        <h2 className="text-4xl font-black mb-4 tracking-tighter text-white">Direct Inquiry</h2>
+        <p className="text-slate-400 text-sm max-w-lg mx-auto font-medium">
           Secure communication channel. Our consultants typically respond within 2 hours during Riyadh business hours.
         </p>
       </div>
 
       {submitSuccess ? (
-        <div className="bg-emerald-50 border border-emerald-100 rounded-[3rem] p-8 md:p-10 text-center animate-in zoom-in-95 flex flex-col items-center">
+        <div className="bg-emerald-900/30 border border-emerald-500/20 rounded-[3rem] p-8 md:p-10 text-center animate-in zoom-in-95 flex flex-col items-center">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 text-white shadow-xl animate-in slide-in-from-bottom-4" style={{ backgroundColor: BRAND.colors.accent, boxShadow: `0 10px 30px -10px ${BRAND.colors.accent}4D` }}>
             <CheckCircle size={40} />
           </div>
-          <h3 className="text-3xl font-black mb-4 tracking-tight" style={{ color: BRAND.colors.primary }}>Inquiry Received</h3>
-          <p className="text-slate-600 mb-8 max-w-md mx-auto text-sm leading-relaxed font-medium">
+          <h3 className="text-3xl font-black mb-4 tracking-tight text-white">Inquiry Received</h3>
+          <p className="text-slate-300 mb-8 max-w-md mx-auto text-sm leading-relaxed font-medium">
              Your message has been securely transmitted to our CRM. Our specialized team is reviewing your requirements.
           </p>
-          
-          <div className="bg-white p-8 rounded-3xl border border-emerald-100/50 shadow-sm w-full max-w-md text-left mb-8 space-y-6">
-             <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${BRAND.colors.accent}1A`, color: BRAND.colors.accent }}>
-                   <Clock size={20} />
-                </div>
-                <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Estimated Response</p>
-                   <p className="font-bold text-sm" style={{ color: BRAND.colors.primary }}>Within 2 Business Hours</p>
-                </div>
-             </div>
-             
-             <div className="h-px bg-slate-100 w-full"></div>
-
-             <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${BRAND.colors.primary}0D`, color: BRAND.colors.primary }}>
-                   <CheckCircle2 size={20} />
-                </div>
-                <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Next Steps</p>
-                   <ul className="text-sm font-bold space-y-1" style={{ color: BRAND.colors.primary }}>
-                      <li>• Preliminary assessment by senior consultant</li>
-                      <li>• Custom roadmap delivery via email</li>
-                      <li>• Scheduling of discovery call</li>
-                   </ul>
-                </div>
-             </div>
-          </div>
-
           <button 
             onClick={() => setSubmitSuccess(false)}
-            className="font-black text-xs uppercase tracking-[0.2em] transition-colors"
-            style={{ color: BRAND.colors.primary }}
-            onMouseOver={(e) => e.currentTarget.style.color = BRAND.colors.accent}
-            onMouseOut={(e) => e.currentTarget.style.color = BRAND.colors.primary}
+            className="font-black text-xs uppercase tracking-[0.2em] transition-colors hover:text-white"
+            style={{ color: BRAND.colors.secondary }}
           >
             Send Another Message
           </button>
@@ -150,105 +132,89 @@ const ContactForm: React.FC = () => {
       ) : (
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-8 relative z-10" noValidate>
           
+          {serverError && (
+            <div className="p-4 rounded-xl bg-red-900/30 border border-red-500/30 flex items-center gap-3 text-red-200 text-sm font-bold animate-in fade-in">
+               <AlertCircle size={18} className="shrink-0" />
+               {serverError}
+            </div>
+          )}
+
           {/* Row 1: Identity */}
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-3 group/field">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Full Name <span className="text-red-500">*</span></label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Full Name <span className="text-red-500">*</span></label>
               <div className="relative">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><User size={18} /></div>
-                <input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  type="text"
-                  placeholder="e.g. Sultan Al-Saud"
-                  className={`w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.name ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
-                  style={{ color: BRAND.colors.primary }}
-                />
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"><User size={18} /></div>
+                <input name="name" value={formData.name} onChange={handleChange} type="text" placeholder="e.g. Sultan Al-Saud" className={`w-full pl-14 pr-6 py-5 bg-slate-900 border rounded-2xl outline-none font-bold text-sm text-white placeholder:text-slate-600 ${errors.name ? 'border-red-500/50' : 'border-slate-700 focus:border-[#C9A86A]'}`} />
               </div>
-              {errors.name && <p className="text-red-500 text-[10px] font-bold pl-2 flex items-center gap-1"><AlertCircle size={10} /> {errors.name}</p>}
+              {errors.name && <p className="text-red-500 text-[10px] font-bold pl-2">{errors.name}</p>}
             </div>
 
             <div className="space-y-3 group/field">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Email Address <span className="text-red-500">*</span></label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Email Address <span className="text-red-500">*</span></label>
               <div className="relative">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><Mail size={18} /></div>
-                <input
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  type="email"
-                  placeholder="name@company.com"
-                  className={`w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.email ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
-                  style={{ color: BRAND.colors.primary }}
-                />
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"><Mail size={18} /></div>
+                <input name="email" value={formData.email} onChange={handleChange} type="email" placeholder="name@company.com" className={`w-full pl-14 pr-6 py-5 bg-slate-900 border rounded-2xl outline-none font-bold text-sm text-white placeholder:text-slate-600 ${errors.email ? 'border-red-500/50' : 'border-slate-700 focus:border-[#C9A86A]'}`} />
               </div>
-              {errors.email && <p className="text-red-500 text-[10px] font-bold pl-2 flex items-center gap-1"><AlertCircle size={10} /> {errors.email}</p>}
+              {errors.email && <p className="text-red-500 text-[10px] font-bold pl-2">{errors.email}</p>}
             </div>
           </div>
 
-          {/* Row 2: Contact Info */}
+          {/* Row 2: Business Info */}
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-3 group/field">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Phone Number <span className="text-red-500">*</span></label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Proposed Business Activity <span className="text-red-500">*</span></label>
               <div className="relative">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><Phone size={18} /></div>
-                <input
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  type="tel"
-                  placeholder="+966 5..."
-                  className={`w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 ${errors.phone ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
-                  style={{ color: BRAND.colors.primary }}
-                />
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"><Briefcase size={18} /></div>
+                <input name="businessType" value={formData.businessType} onChange={handleChange} type="text" placeholder="e.g. IT, Construction, Trading" className={`w-full pl-14 pr-6 py-5 bg-slate-900 border rounded-2xl outline-none font-bold text-sm text-white placeholder:text-slate-600 ${errors.businessType ? 'border-red-500/50' : 'border-slate-700 focus:border-[#C9A86A]'}`} />
               </div>
-              {errors.phone && <p className="text-red-500 text-[10px] font-bold pl-2 flex items-center gap-1"><AlertCircle size={10} /> {errors.phone}</p>}
+              {errors.businessType && <p className="text-red-500 text-[10px] font-bold pl-2">{errors.businessType}</p>}
             </div>
 
             <div className="space-y-3 group/field">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Company Name (Optional)</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Current Status <span className="text-red-500">*</span></label>
               <div className="relative">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><Building size={18} /></div>
-                <input
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  type="text"
-                  placeholder="Entity Name"
-                  className="w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border border-slate-100 rounded-2xl outline-none focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10 transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400"
-                  style={{ color: BRAND.colors.primary }}
-                />
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"><MapPin size={18} /></div>
+                <select name="status" value={formData.status} onChange={handleChange} className={`w-full pl-14 pr-6 py-5 bg-slate-900 border rounded-2xl outline-none font-bold text-sm appearance-none text-white ${errors.status ? 'border-red-500/50' : 'border-slate-700 focus:border-[#C9A86A]'}`}>
+                   <option value="">Select Status...</option>
+                   <option value="outside">Outside Saudi Arabia</option>
+                   <option value="visit">Inside Saudi (Visit Visa)</option>
+                   <option value="resident">Living in Saudi (Iqama)</option>
+                </select>
               </div>
+              {errors.status && <p className="text-red-500 text-[10px] font-bold pl-2">{errors.status}</p>}
             </div>
           </div>
 
-          {/* Message Area */}
+          {/* Row 3: Contact */}
           <div className="space-y-3 group/field">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 transition-colors group-focus-within/field:text-[#051C2C]">Message <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <div className="absolute left-5 top-5 text-slate-400 transition-colors group-focus-within/field:text-[#C9A86A]"><MessageSquare size={18} /></div>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                placeholder="Please describe your business requirements..."
-                className={`w-full pl-14 pr-6 py-5 bg-[#F8F9FA] border rounded-2xl outline-none transition-all font-bold text-sm placeholder:font-medium placeholder:text-slate-400 min-h-[160px] resize-none ${errors.message ? 'border-red-300 focus:ring-2 focus:ring-red-200' : 'border-slate-100 focus:border-[#C9A86A] focus:ring-4 focus:ring-[#C9A86A]/10'}`}
-                style={{ color: BRAND.colors.primary }}
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">WhatsApp Number <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"><Phone size={18} /></div>
+                <input name="phone" value={formData.phone} onChange={handleChange} type="tel" placeholder="+966 5..." className={`w-full pl-14 pr-6 py-5 bg-slate-900 border rounded-2xl outline-none font-bold text-sm text-white placeholder:text-slate-600 ${errors.phone ? 'border-red-500/50' : 'border-slate-700 focus:border-[#C9A86A]'}`} />
+              </div>
+              {errors.phone && <p className="text-red-500 text-[10px] font-bold pl-2">{errors.phone}</p>}
+          </div>
+
+          {/* Row 4: Message */}
+          <div className="space-y-3 group/field">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Your Message</label>
+              <textarea 
+                name="message" 
+                value={formData.message} 
+                onChange={handleChange} 
+                placeholder="Tell us about your business goals..." 
+                className="w-full px-6 py-5 bg-slate-900 border border-slate-700 rounded-2xl outline-none font-bold text-sm text-white placeholder:text-slate-600 min-h-[120px] focus:border-[#C9A86A] resize-none"
               />
-            </div>
-            {errors.message && <p className="text-red-500 text-[10px] font-bold pl-2 flex items-center gap-1"><AlertCircle size={10} /> {errors.message}</p>}
           </div>
 
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="w-full text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] mt-4"
+            className="w-full text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] mt-4 hover:shadow-2xl hover:shadow-blue-900/20"
             style={{ backgroundColor: BRAND.colors.primary }}
-            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = BRAND.colors.secondary; e.currentTarget.style.color = BRAND.colors.primary; }}
-            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = BRAND.colors.primary; e.currentTarget.style.color = 'white'; }}
           >
-            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <>Send Message <Send size={16} className="group-hover:translate-x-1 transition-transform" /></>}
+            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <>Request My Free Consultation <Send size={16} className="group-hover:translate-x-1 transition-transform" /></>}
           </button>
         </form>
       )}

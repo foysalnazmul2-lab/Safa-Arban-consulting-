@@ -204,7 +204,7 @@ const PaymentAuth: React.FC<PaymentAuthProps> = ({ orderId, totalAmount, onBack,
                       name="transaction_ref"
                       value={formData.ref}
                       onChange={e => setFormData({...formData, ref: e.target.value})}
-                      placeholder="ANB-1234567..."
+                      placeholder="RAJHI-1234567..."
                       className="w-full bg-[#F8F9FA] border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#C9A86A]/50 transition-all font-bold text-sm"
                       style={{ color: BRAND.colors.primary }}
                     />

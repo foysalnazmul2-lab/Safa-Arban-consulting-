@@ -32,27 +32,34 @@ import {
 interface HomeProps {
   setActivePage: (page: Page) => void;
   addToCart: (id: string) => void;
+  addItemsToCart?: (ids: string[]) => void;
   cart: string[];
   onServiceClick: (slug: string) => void;
   currency?: 'SAR' | 'USD';
 }
 
-const Home: React.FC<HomeProps> = ({ setActivePage, addToCart, cart, onServiceClick, currency = 'SAR' }) => {
+const Home: React.FC<HomeProps> = ({ setActivePage, addToCart, addItemsToCart, cart, onServiceClick, currency = 'SAR' }) => {
   
   const handleBundleAdd = (ids: string[]) => {
-    ids.forEach(id => addToCart(id));
+    if (addItemsToCart) {
+        addItemsToCart(ids);
+    } else {
+        ids.forEach(id => addToCart(id));
+    }
     setActivePage('quotation');
   };
 
   return (
     <>
-      <Hero onStart={(page) => setActivePage(page)} />
+      <div id="home">
+        <Hero onStart={(page) => setActivePage(page)} />
+      </div>
       
       {/* Financial Ticker */}
       <MarketPulse />
 
       {/* 1. BLUEPRINT ENGINE (High Engagement) */}
-      <SetupWizard onAddBundle={handleBundleAdd} />
+      <SetupWizard onAddBundle={handleBundleAdd} currency={currency} />
 
       {/* Strategic Geography */}
       <SaudiMap />
@@ -64,12 +71,14 @@ const Home: React.FC<HomeProps> = ({ setActivePage, addToCart, cart, onServiceCl
       <JourneyTimeline />
 
       {/* 2. THE ECOSYSTEM (Service Matrix) */}
-      <ServiceEcosystem 
-        onAddToCart={addToCart} 
-        cart={cart} 
-        onViewDetails={onServiceClick}
-        currency={currency}
-      />
+      <div id="services">
+        <ServiceEcosystem 
+          onAddToCart={addToCart} 
+          cart={cart} 
+          onViewDetails={onServiceClick}
+          currency={currency}
+        />
+      </div>
 
       {/* Vision 2030 Sector Focus */}
       <SectorFocus />
@@ -98,18 +107,18 @@ const Home: React.FC<HomeProps> = ({ setActivePage, addToCart, cart, onServiceCl
       {/* Global Presence Map */}
       <GlobalPresence />
 
-      {/* 5. VALUE PROPOSITION - BENTO GRID */}
-      <div className="py-24 bg-slate-50">
+      {/* 5. VALUE PROPOSITION - BENTO GRID (DARK MODE) */}
+      <div id="about" className="py-24 bg-slate-900 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
              <span className="font-black uppercase tracking-[0.3em] text-[10px] block mb-4" style={{ color: BRAND.colors.accent }}>Why SafaArban?</span>
-             <h2 className="text-4xl md:text-5xl font-black tracking-tight" style={{ color: BRAND.colors.primary }}>The Premium Standard</h2>
+             <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white">The Premium Standard</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 grid-rows-2 gap-6 h-auto lg:h-[600px]">
              
              {/* Card 1: 100% Ownership */}
-             <div className="md:col-span-2 row-span-2 rounded-[2.5rem] p-10 relative overflow-hidden group shadow-2xl transition-all hover:scale-[1.01]" style={{ backgroundColor: BRAND.colors.primary }}>
+             <div className="md:col-span-2 row-span-2 rounded-[2.5rem] p-10 relative overflow-hidden group shadow-2xl transition-all hover:scale-[1.01] border border-slate-700" style={{ backgroundColor: BRAND.colors.primary }}>
                 <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[100px] opacity-20 group-hover:opacity-30 transition-opacity" style={{ backgroundColor: BRAND.colors.secondary }}></div>
                 <div className="relative z-10 h-full flex flex-col justify-between">
                    <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/10" style={{ color: BRAND.colors.secondary }}>
@@ -128,29 +137,29 @@ const Home: React.FC<HomeProps> = ({ setActivePage, addToCart, cart, onServiceCl
              </div>
 
              {/* Card 2: Speed */}
-             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-lg hover:shadow-xl transition-all group hover:-translate-y-1">
+             <div className="bg-slate-800 rounded-[2.5rem] p-8 border border-slate-700 shadow-lg hover:shadow-xl transition-all group hover:-translate-y-1">
                 <Zap size={32} className="mb-4 group-hover:scale-110 transition-transform" style={{ color: BRAND.colors.alert }} />
-                <h4 className="text-xl font-black mb-2" style={{ color: BRAND.colors.primary }}>Fast-Track</h4>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">MISA License issuance in as little as 24 hours.</p>
+                <h4 className="text-xl font-black mb-2 text-white">Fast-Track</h4>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">MISA License issuance in as little as 24 hours.</p>
              </div>
 
              {/* Card 3: Trust */}
-             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-lg hover:shadow-xl transition-all group hover:-translate-y-1">
+             <div className="bg-slate-800 rounded-[2.5rem] p-8 border border-slate-700 shadow-lg hover:shadow-xl transition-all group hover:-translate-y-1">
                 <ShieldCheck size={32} style={{ color: BRAND.colors.accent }} className="mb-4 group-hover:scale-110 transition-transform" />
-                <h4 className="text-xl font-black mb-2" style={{ color: BRAND.colors.primary }}>Govt. Liaison</h4>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">Certified PROs handling MISA, MC, & ZATCA directly.</p>
+                <h4 className="text-xl font-black mb-2 text-white">Govt. Liaison</h4>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">Certified PROs handling MISA, MC, & ZATCA directly.</p>
              </div>
 
              {/* Card 4: Banking */}
-             <div className="md:col-span-2 bg-gradient-to-r rounded-[2.5rem] p-8 relative overflow-hidden shadow-xl group hover:shadow-2xl transition-all" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, #b08d55)` }}>
+             <div className="md:col-span-2 bg-gradient-to-r rounded-[2.5rem] p-8 relative overflow-hidden shadow-xl group hover:shadow-2xl transition-all border border-slate-700" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, #b08d55)` }}>
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div className="relative z-10 flex items-center gap-6 h-full">
                    <div className="p-4 rounded-2xl text-white shrink-0 shadow-lg" style={{ backgroundColor: BRAND.colors.primary }}>
                       <Building2 size={24} />
                    </div>
                    <div>
-                      <h4 className="text-2xl font-black mb-1" style={{ color: BRAND.colors.primary }}>Corporate Banking</h4>
-                      <p className="text-xs font-bold opacity-80" style={{ color: BRAND.colors.primary }}>Pre-approved KYC with SNB, AlRajhi & ANB.</p>
+                      <h4 className="text-2xl font-black mb-1 text-[#051C2C]">Corporate Banking</h4>
+                      <p className="text-xs font-bold opacity-80 text-[#051C2C]">Pre-approved KYC with SNB, AlRajhi & ANB.</p>
                    </div>
                    <div className="ml-auto bg-white/20 p-3 rounded-full hover:bg-white/40 transition-colors cursor-pointer" onClick={() => setActivePage('contact')}>
                       <ArrowRight size={20} style={{ color: BRAND.colors.primary }} />
@@ -162,7 +171,7 @@ const Home: React.FC<HomeProps> = ({ setActivePage, addToCart, cart, onServiceCl
       </div>
 
       {/* 6. LATEST INTELLIGENCE */}
-      <div className="py-24 bg-white border-t border-slate-100">
+      <div id="blog" className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex justify-between items-end mb-12">
             <div>
@@ -220,7 +229,7 @@ const Home: React.FC<HomeProps> = ({ setActivePage, addToCart, cart, onServiceCl
       <VerificationPortal />
 
       {/* 7. FINAL CTA */}
-      <div className="py-24 text-white relative overflow-hidden" style={{ backgroundColor: BRAND.colors.primary }}>
+      <div id="contact" className="py-24 text-white relative overflow-hidden" style={{ backgroundColor: BRAND.colors.primary }}>
          <div className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full blur-[150px] opacity-10 pointer-events-none" style={{ backgroundColor: BRAND.colors.secondary }}></div>
          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full blur-[150px] opacity-10 pointer-events-none" style={{ backgroundColor: BRAND.colors.accent }}></div>
          
@@ -258,4 +267,3 @@ const Home: React.FC<HomeProps> = ({ setActivePage, addToCart, cart, onServiceCl
 };
 
 export default Home;
-    

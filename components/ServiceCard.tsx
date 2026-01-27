@@ -111,6 +111,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
   const styles = getCategoryStyles(service.category, service.name);
   const viewCount = React.useMemo(() => Math.floor(Math.random() * 40) + 5, []);
 
+  // Premium Detection
+  const isPremium = service.id === 'cfr-01' || service.id === 'sec-01'; // MISA & Industrial
+
   // Conversion Logic
   const RATE = currency === 'USD' ? 0.2666 : 1;
   const basePrice = service.professionalFee;
@@ -122,18 +125,18 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
   return (
     <div 
       className={`relative flex flex-col justify-between h-full transition-all duration-500 rounded-[2.5rem] overflow-hidden group border ${
-        isVip 
-          ? 'shadow-[0_0_30px_rgba(212,175,55,0.2)]' 
+        isPremium || isVip 
+          ? 'shadow-[0_0_30px_rgba(233,78,78,0.2)]' // Red shadow for premium
           : `hover:border-slate-300 hover:shadow-xl`
       }`}
       style={{
-        backgroundColor: isVip ? BRAND.colors.primary : 'white',
-        borderColor: isVip ? BRAND.colors.secondary : isInCart ? BRAND.colors.primary : '#F1F5F9'
+        backgroundColor: (isPremium || isVip) ? BRAND.colors.primary : 'white',
+        borderColor: (isPremium || isVip) ? BRAND.colors.secondary : isInCart ? BRAND.colors.primary : '#F1F5F9'
       }}
     >
       
-      {/* Background Effects for VIP */}
-      {isVip && (
+      {/* Background Effects for VIP/Premium */}
+      {(isPremium || isVip) && (
         <>
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-10 pointer-events-none" style={{ backgroundColor: BRAND.colors.secondary }}></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-[80px] opacity-10 pointer-events-none" style={{ backgroundColor: BRAND.colors.alert }}></div>
@@ -141,13 +144,21 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
         </>
       )}
 
-      {/* Header Badge */}
-      {isInCart && (
-        <div className="absolute top-0 left-0 px-6 py-2 rounded-br-2xl text-[10px] font-black uppercase tracking-widest z-20 text-white"
-             style={{ backgroundColor: isVip ? BRAND.colors.secondary : BRAND.colors.primary, color: isVip ? BRAND.colors.primary : 'white' }}>
-           <Check size={12} className="inline mr-1" /> Added
-        </div>
-      )}
+      {/* Header Badges */}
+      <div className="absolute top-0 left-0 z-20 flex flex-col items-start">
+        {isInCart && (
+          <div className="px-6 py-2 rounded-br-2xl text-[10px] font-black uppercase tracking-widest text-white mb-2"
+               style={{ backgroundColor: (isPremium || isVip) ? BRAND.colors.secondary : BRAND.colors.primary }}>
+             <Check size={12} className="inline mr-1" /> Added
+          </div>
+        )}
+        {isPremium && !isVip && (
+           <div className="px-6 py-2 rounded-br-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg"
+               style={{ backgroundColor: BRAND.colors.secondary }}>
+             <Crown size={12} className="inline mr-1" /> Most Popular
+          </div>
+        )}
+      </div>
 
       {/* Hero Image if available */}
       {service.image && (
@@ -163,8 +174,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
           <div className={`p-4 rounded-2xl transition-all duration-300 cursor-pointer hover:scale-105`}
                onClick={onViewDetails}
                style={{ 
-                 backgroundColor: isVip ? BRAND.colors.secondary : styles.bg,
-                 color: isVip ? BRAND.colors.primary : styles.color
+                 backgroundColor: (isPremium || isVip) ? BRAND.colors.secondary : styles.bg,
+                 color: (isPremium || isVip) ? BRAND.colors.primary : styles.color
                }}>
             {styles.icon}
           </div>
@@ -175,13 +186,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
                onClick={(e) => { e.stopPropagation(); setIsVip(!isVip); }}
                className={`cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all hover:bg-slate-50`}
                style={{ 
-                 backgroundColor: isVip ? BRAND.colors.primary : 'white',
-                 borderColor: isVip ? BRAND.colors.secondary : '#E2E8F0',
-                 color: isVip ? BRAND.colors.secondary : '#94A3B8'
+                 backgroundColor: (isPremium || isVip) ? BRAND.colors.primary : 'white',
+                 borderColor: (isPremium || isVip) ? BRAND.colors.secondary : '#E2E8F0',
+                 color: (isPremium || isVip) ? BRAND.colors.secondary : '#94A3B8'
                }}
              >
                 <div className={`w-3 h-3 rounded-full transition-colors ${isVip ? 'animate-pulse' : ''}`}
-                     style={{ backgroundColor: isVip ? BRAND.colors.secondary : '#CBD5E1' }}></div>
+                     style={{ backgroundColor: (isPremium || isVip) ? BRAND.colors.secondary : '#CBD5E1' }}></div>
                 <span className="text-[9px] font-black uppercase tracking-widest">VIP Protocol</span>
              </div>
              {isVip && <span className="text-[9px] font-bold animate-in fade-in" style={{ color: BRAND.colors.secondary }}>+ Priority Processing</span>}
@@ -191,10 +202,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
         {/* Labels */}
         <div className="mb-4 flex items-center justify-between">
            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md transition-colors`}
-                 style={{ backgroundColor: isVip ? 'rgba(255,255,255,0.1)' : styles.bg, color: isVip ? 'rgba(255,255,255,0.7)' : styles.color }}>
+                 style={{ 
+                   backgroundColor: (isPremium || isVip) ? 'rgba(255,255,255,0.1)' : styles.bg, 
+                   color: (isPremium || isVip) ? 'rgba(255,255,255,0.7)' : styles.color 
+                 }}>
              {styles.label}
            </span>
-           <span className="flex items-center gap-1 text-[9px] font-bold" style={{ color: isVip ? BRAND.colors.secondary : '#94A3B8' }}>
+           <span className="flex items-center gap-1 text-[9px] font-bold" style={{ color: (isPremium || isVip) ? BRAND.colors.secondary : '#94A3B8' }}>
              <Eye size={10} /> {viewCount} viewing
            </span>
         </div>
@@ -203,22 +217,22 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
         <h3 
           onClick={onViewDetails}
           className="text-lg font-black mb-4 leading-tight cursor-pointer min-h-[3.5rem] transition-colors"
-          style={{ color: isVip ? 'white' : BRAND.colors.primary }}
-          onMouseOver={(e) => { if (!isVip) e.currentTarget.style.color = BRAND.colors.accent }}
-          onMouseOut={(e) => { if (!isVip) e.currentTarget.style.color = BRAND.colors.primary }}
+          style={{ color: (isPremium || isVip) ? 'white' : BRAND.colors.primary }}
+          onMouseOver={(e) => { if (!isPremium && !isVip) e.currentTarget.style.color = BRAND.colors.secondary }}
+          onMouseOut={(e) => { if (!isPremium && !isVip) e.currentTarget.style.color = BRAND.colors.primary }}
         >
           {service.name}
         </h3>
 
         <div className="mb-6">
-           <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: isVip ? BRAND.colors.secondary : '#94A3B8' }}>
+           <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: (isPremium || isVip) ? BRAND.colors.secondary : '#94A3B8' }}>
              {isVip ? 'VIP Package Fee' : 'Professional Fee'}
            </p>
            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-black font-mono tracking-tighter" style={{ color: isVip ? 'white' : BRAND.colors.primary }}>
+              <span className="text-3xl font-black font-mono tracking-tighter" style={{ color: (isPremium || isVip) ? 'white' : BRAND.colors.primary }}>
                 {currency === 'USD' ? '$' : ''}{finalPrice.toLocaleString()}
               </span>
-              <span className={`text-[9px] font-bold ${isVip ? 'text-white/50' : 'text-slate-400'}`}>{currency}</span>
+              <span className={`text-[9px] font-bold ${(isPremium || isVip) ? 'text-white/50' : 'text-slate-400'}`}>{currency}</span>
            </div>
         </div>
 
@@ -231,7 +245,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
                <div className="flex items-center gap-2 text-xs font-bold" style={{ color: BRAND.colors.secondary }}><ShieldCheck size={12} /> Compliance Guarantee</div>
              </>
            ) : (
-             <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed font-medium">
+             <p className={`text-sm line-clamp-3 leading-relaxed font-medium ${(isPremium) ? 'text-slate-300' : 'text-slate-500'}`}>
                {service.desc}
              </p>
            )}
@@ -241,7 +255,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
         <div className="mt-auto mb-6">
            <button 
              onClick={onViewDetails}
-             className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:underline transition-all ${isVip ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:text-[#051C2C]'}`}
+             className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:underline transition-all ${(isPremium || isVip) ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:text-[#0D2B4F]'}`}
            >
              Learn More <ArrowRight size={12} />
            </button>
@@ -249,16 +263,16 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
       </div>
 
       {/* Action Area */}
-      <div className={`p-6 border-t relative z-10 ${isVip ? 'border-white/10 bg-white/5' : 'border-slate-50 bg-[#F8F9FA]/50'}`}>
+      <div className={`p-6 border-t relative z-10 ${(isPremium || isVip) ? 'border-white/10 bg-white/5' : 'border-slate-50 bg-[#F5F7FA]/50'}`}>
         <button 
           onClick={() => onToggle()}
           className="w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg"
           style={{
-            backgroundColor: isVip 
+            backgroundColor: (isPremium || isVip)
               ? BRAND.colors.secondary 
               : isInCart ? BRAND.colors.accent : BRAND.colors.primary,
-            color: isVip ? BRAND.colors.primary : 'white',
-            backgroundImage: isVip ? `linear-gradient(to right, ${BRAND.colors.secondary}, #F2D696)` : 'none'
+            color: (isPremium || isVip) ? BRAND.colors.primary : isInCart ? BRAND.colors.primary : 'white',
+            backgroundImage: (isPremium || isVip) ? `linear-gradient(to right, ${BRAND.colors.secondary}, ${BRAND.colors.accent})` : 'none'
           }}
         >
           {isInCart ? (
@@ -268,11 +282,11 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isInCart, onToggle, 
           )}
         </button>
         {service.governmentFee > 0 ? (
-           <p className={`text-[9px] text-center font-bold mt-3 uppercase tracking-wider ${isVip ? 'text-white/30' : 'text-slate-400'}`}>
+           <p className={`text-[9px] text-center font-bold mt-3 uppercase tracking-wider ${(isPremium || isVip) ? 'text-white/30' : 'text-slate-400'}`}>
              + ~{currency === 'USD' ? '$' : ''}{govPrice.toLocaleString()} {currency} Govt Fees
            </p>
         ) : (
-           <p className={`text-[9px] text-center font-bold mt-3 uppercase tracking-wider ${isVip ? 'text-white/30' : 'text-slate-400'}`}>
+           <p className={`text-[9px] text-center font-bold mt-3 uppercase tracking-wider ${(isPremium || isVip) ? 'text-white/30' : 'text-slate-400'}`}>
              Govt. Fees: N/A (Consulting)
            </p>
         )}

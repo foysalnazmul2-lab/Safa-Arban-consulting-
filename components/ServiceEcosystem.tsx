@@ -12,7 +12,8 @@ import {
   Zap,
   Info,
   Globe,
-  Building
+  Building,
+  Lightbulb
 } from 'lucide-react';
 import { SERVICES_DB, BRAND } from '../constants';
 import { Service } from '../types';
@@ -25,33 +26,39 @@ interface ServiceEcosystemProps {
 }
 
 const ServiceEcosystem: React.FC<ServiceEcosystemProps> = ({ onAddToCart, cart, onViewDetails, currency = 'SAR' }) => {
-  const [activeStage, setActiveStage] = useState<'launch' | 'operate' | 'grow'>('launch');
+  const [activeStage, setActiveStage] = useState<'launch' | 'operate' | 'grow' | 'advisory'>('launch');
 
   const stages = {
     launch: {
-      label: 'Launch Phase',
+      label: 'Launch',
       icon: <Rocket />,
       desc: 'Mandatory licenses to establish legal presence.',
-      keywords: ['Formation', 'Licensing', 'Registration']
+      keywords: ['Formation', 'Licensing', 'Registration', 'MISA', 'Industrial']
     },
     operate: {
-      label: 'Operational Phase',
+      label: 'Operate',
       icon: <Settings />,
-      desc: 'Compliance, HR, and Banking operations.',
-      keywords: ['Manpower', 'Immigration', 'Compliance', 'Support']
+      desc: 'Compliance, HR, Banking, and daily operations.',
+      keywords: ['Manpower', 'Immigration', 'Compliance', 'Support', 'Human Capital', 'BPO']
     },
     grow: {
-      label: 'Growth Phase',
+      label: 'Grow',
       icon: <TrendingUp />,
       desc: 'Expansion, Special Permits, and VIP Residency.',
-      keywords: ['Premium', 'Sector', 'Industrial']
+      keywords: ['Premium', 'Sector', 'Real Estate', 'Mining', 'Tourism']
+    },
+    advisory: {
+      label: 'Advisory',
+      icon: <Lightbulb />,
+      desc: 'Strategic consulting, Tax, Legal, and Digital transformation.',
+      keywords: ['Strategy', 'Consulting', 'Advisory', 'Legal', 'Marketing', 'Digital', 'Financial', 'Tax', 'Research']
     }
   };
 
   const getFilteredServices = () => {
     const keywords = stages[activeStage].keywords;
     return SERVICES_DB.filter(service => 
-      keywords.some(k => service.category.includes(k))
+      keywords.some(k => service.category.includes(k) || service.name.includes(k))
     );
   };
 
@@ -68,19 +75,19 @@ const ServiceEcosystem: React.FC<ServiceEcosystemProps> = ({ onAddToCart, cart, 
             <Crown size={14} /> The Saudi Investment Ecosystem
           </span>
           <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-tight mb-6" style={{ color: BRAND.colors.primary }}>
-            Service <span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, ${BRAND.colors.alert})` }}>Matrix</span>
+            Solutions <span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.colors.secondary}, ${BRAND.colors.alert})` }}>Matrix</span>
           </h2>
           
           {/* Stage Tabs */}
-          <div className="inline-flex bg-white p-1.5 rounded-full shadow-lg border border-slate-100">
+          <div className="inline-flex flex-wrap justify-center gap-2 bg-white p-2 rounded-[2rem] shadow-lg border border-slate-100">
             {(Object.keys(stages) as Array<keyof typeof stages>).map((key) => (
               <button
                 key={key}
                 onClick={() => setActiveStage(key)}
                 className={`px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                   activeStage === key 
-                  ? 'text-white shadow-md' 
-                  : 'text-slate-400 hover:text-slate-600'
+                  ? 'text-white shadow-md transform scale-105' 
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                 }`}
                 style={{ backgroundColor: activeStage === key ? BRAND.colors.primary : 'transparent' }}
               >
@@ -89,6 +96,10 @@ const ServiceEcosystem: React.FC<ServiceEcosystemProps> = ({ onAddToCart, cart, 
               </button>
             ))}
           </div>
+          
+          <p className="mt-6 text-slate-500 text-sm font-medium animate-in fade-in key={activeStage}">
+             {stages[activeStage].desc}
+          </p>
         </div>
 
         {/* Bento Grid */}
@@ -107,7 +118,7 @@ const ServiceEcosystem: React.FC<ServiceEcosystemProps> = ({ onAddToCart, cart, 
                         <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-white">
                            <Star size={24} fill="white" />
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest bg-white text-[#051C2C] px-3 py-1 rounded-full">Most Popular</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest bg-white text-[#051C2C] px-3 py-1 rounded-full">Featured Solution</span>
                      </div>
                      <h3 className="text-3xl font-black text-white mb-4 leading-tight">{filtered[0].name}</h3>
                      <p className="text-slate-300 text-sm leading-relaxed max-w-sm font-medium">{filtered[0].desc}</p>

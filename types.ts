@@ -48,7 +48,7 @@ export interface CartItem extends Service {
   quantity?: number;
 }
 
-export type Page = 'home' | 'services' | 'quotation' | 'about' | 'contact' | 'blog' | 'payment-auth' | 'service-details' | 'privacy' | 'terms' | 'client-portal' | 'admin-portal' | 'login';
+export type Page = 'home' | 'services' | 'quotation' | 'about' | 'contact' | 'blog' | 'payment-auth' | 'service-details' | 'privacy' | 'terms' | 'client-portal' | 'admin-portal' | 'login' | 'proposal-generator' | 'misa-licenses' | 'agreement-generator';
 
 export interface ChatMessage {
   role: 'user' | 'model';
@@ -102,4 +102,16 @@ export interface User {
   email: string;
   role: 'admin' | 'client';
   company?: string;
+}
+
+// New Type for Smart Contracts
+export interface SmartContract {
+  id: string;
+  clientName: string;
+  serviceName: string;
+  total: number;
+  date: string;
+  status: 'Draft' | 'Signed' | 'Sent';
+  hash: string;
+  items: string[];
 }
