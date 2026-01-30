@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { jsPDF } from 'jspdf';
 import { 
   FileText, 
   Download, 
@@ -9,7 +7,7 @@ import {
   Sparkles, 
   Bot, 
   Loader2, 
-  Briefcase,
+  Briefcase, 
   User,
   Lock,
   Edit3,
@@ -19,18 +17,19 @@ import {
   Save,
   History,
   Trash2,
-  Check,
-  FileSignature,
-  LayoutTemplate,
   FileCheck,
   ShieldCheck,
-  MousePointer,
-  BookOpen
+  BookOpen,
+  LayoutTemplate,
+  Calculator,
+  RefreshCw,
+  Printer
 } from 'lucide-react';
 import { BRAND, SERVICES_DB } from '../constants';
 import { gemini } from '../geminiService';
 import { SafaArbanLogo } from './Logo';
 import { LEGAL_CLAUSES } from '../agreementClauses';
+import { SmartContract } from '../types';
 
 const LANGUAGES = [
   'English', 'Arabic', 'French', 'Chinese', 
@@ -51,6 +50,10 @@ interface AgreementGeneratorProps {
   onBack: () => void;
 }
 
+// Static Assets for PDF
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 84" width="380" height="84"><g transform="translate(4, 4)"><path d="M45 10 L75 10 L55 35 L25 35 Z" fill="#E94E4E" /><path d="M25 40 L55 40 L45 65 L15 65 Z" fill="#0D2B4F" /></g><g transform="translate(90, 52)"><text font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="40" fill="#0D2B4F" letter-spacing="-0.02em">SafaArban</text><text x="215" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="40" fill="#E94E4E" letter-spacing="-0.02em">Ltd</text></g></svg>`;
+const LOGO_DATA_URI = `data:image/svg+xml;base64,${btoa(LOGO_SVG)}`;
+
 const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
   // Tabs
   const [activeTab, setActiveTab] = useState<'generate' | 'vault'>('generate');
@@ -66,8 +69,8 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   
   // SafaArban Representative Details
-  const [repName, setRepName] = useState('');
-  const [repPosition, setRepPosition] = useState('');
+  const [repName, setRepName] = useState('Foysal Nazmul');
+  const [repPosition, setRepPosition] = useState('General Manager');
   const [repMobile, setRepMobile] = useState('');
 
   // Vault State
@@ -85,7 +88,6 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
 
   const toggleLanguage = (lang: string) => {
     if (selectedLanguages.includes(lang)) {
-        // Prevent removing the last language
         if (selectedLanguages.length > 1) {
             setSelectedLanguages(prev => prev.filter(l => l !== lang));
         }
@@ -93,8 +95,27 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
         if (selectedLanguages.length < 3) {
             setSelectedLanguages(prev => [...prev, lang]);
         }
-        // Removed alert to improve UX
     }
+  };
+
+  // --- FINANCIAL HELPERS ---
+  const [paymentTerms, setPaymentTerms] = useState<'standard' | '50-50' | 'upfront'>('standard');
+
+  const getPaymentSchedule = () => {
+      const fee = parseFloat(baseFee) || 0;
+      const vat = fee * 0.15;
+      const total = fee + vat;
+
+      if (paymentTerms === 'upfront') return [{ name: '1. Upon Signing', pct: '100%', amount: total }];
+      if (paymentTerms === '50-50') return [
+          { name: '1. Mobilization', pct: '50%', amount: total * 0.5 },
+          { name: '2. Completion', pct: '50%', amount: total * 0.5 }
+      ];
+      return [
+          { name: '1. Upon Signing', pct: '40%', amount: total * 0.4 },
+          { name: '2. License Issuance', pct: '30%', amount: total * 0.3 },
+          { name: '3. Final Delivery', pct: '30%', amount: total * 0.3 }
+      ];
   };
 
   // --- ACTIONS ---
@@ -113,12 +134,17 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
 
     let financialContext = "";
     if (fee > 0) {
+        let paymentString = "";
+        if (paymentTerms === 'upfront') paymentString = "100% Upon Signing";
+        else if (paymentTerms === '50-50') paymentString = "50% Mobilization, 50% Completion";
+        else paymentString = "40% upon signing, 30% upon license issuance, 30% upon final delivery";
+
         financialContext = `
         FINANCIAL TERMS:
         - Professional Fee: ${fee.toLocaleString()} SAR
         - VAT (15%): ${vat.toLocaleString()} SAR
         - TOTAL CONTRACT VALUE: ${total.toLocaleString()} SAR
-        - Payment Terms: 50% Mobilization, 50% Completion.
+        - Payment Terms: ${paymentString}
         `;
     }
 
@@ -130,7 +156,8 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
     `;
 
     const fullPrompt = `
-      Client Name: ${clientName}. 
+      FIRST PARTY: SafaArban Ltd, represented by ${repName} (${repPosition}).
+      SECOND PARTY (CLIENT): ${clientName}. 
       Project/Service Title: ${projectTitle || 'General Consultation'}.
       
       ${financialContext}
@@ -147,26 +174,8 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
 
   const handleInsertClause = (clauseContent: string) => {
     if (!textAreaRef.current) return;
-    
-    const textarea = textAreaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = agreementText;
-    
-    const before = text.substring(0, start);
-    const after = text.substring(end);
-    const prefix = start > 0 && text[start - 1] !== '\n' ? '\n\n' : '';
-    const suffix = after.length > 0 && after[0] !== '\n' ? '\n\n' : '';
-    
-    const newText = before + prefix + clauseContent + suffix + after;
+    const newText = agreementText + "\n\n" + clauseContent;
     setAgreementText(newText);
-    
-    // Restore focus and move cursor to end of inserted text
-    setTimeout(() => {
-        textarea.focus();
-        const newCursorPos = start + prefix.length + clauseContent.length;
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
   };
 
   const handleSaveToVault = () => {
@@ -192,7 +201,7 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
     setProjectTitle(item.title);
     setAgreementText(item.content);
     setSelectedLanguages(item.languages);
-    setActiveTab('generate'); // Switch back to editor
+    setActiveTab('generate');
   };
 
   const handleDeleteFromVault = (id: string, e: React.MouseEvent) => {
@@ -205,247 +214,36 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
   };
 
   const handleDownloadPDF = () => {
-    if (!agreementText) return;
+    const element = document.getElementById('printable-agreement-content');
+    if (!element) return;
+
     setIsDownloading(true);
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20; 
-    
-    // Theme Colors
-    const primaryColor = [13, 43, 79]; // #0D2B4F
-    const accentColor = [233, 78, 78]; // #E94E4E
-    const grayColor = [100, 116, 139]; // Slate 500
-
-    const refId = `SA-AGR-${new Date().getFullYear()}-${Math.floor(Math.random()*10000)}`;
-    const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-
-    // --- PAGE 1: COVER ---
-    // Sidebar background
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(0, 0, pageWidth * 0.35, pageHeight, 'F');
-    
-    // Logo Text (Left Sidebar)
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(24);
-    doc.text("SafaArban", 15, 40);
-    
-    doc.setFontSize(9);
-    doc.setTextColor(200, 200, 200);
-    doc.text("STRATEGIC ADVISORY", 15, 48);
-    
-    doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.setLineWidth(1);
-    doc.line(15, 55, 55, 55);
-
-    // Client Info (Left Sidebar)
-    let leftY = 100;
-    doc.setFontSize(8);
-    doc.setTextColor(150, 160, 175);
-    doc.text("PREPARED FOR", 15, leftY);
-    
-    doc.setFontSize(14);
-    doc.setTextColor(255, 255, 255);
-    const clientNameLines = doc.splitTextToSize(clientName, (pageWidth * 0.35) - 25);
-    doc.text(clientNameLines, 15, leftY + 8);
-    
-    leftY += 15 + (clientNameLines.length * 5);
-    
-    doc.setFontSize(8);
-    doc.setTextColor(150, 160, 175);
-    doc.text("DATE", 15, leftY);
-    doc.setFontSize(12);
-    doc.setTextColor(255, 255, 255);
-    doc.text(dateStr, 15, leftY + 7);
-
-    leftY += 20;
-    doc.setFontSize(8);
-    doc.setTextColor(150, 160, 175);
-    doc.text("REFERENCE", 15, leftY);
-    doc.setFontSize(10);
-    doc.setTextColor(255, 255, 255);
-    doc.text(refId, 15, leftY + 6);
-
-    // SafaArban Representative (Left Sidebar)
-    if (repName) {
-        leftY += 20;
-        doc.setFontSize(8);
-        doc.setTextColor(150, 160, 175);
-        doc.text("PREPARED BY", 15, leftY);
-        doc.setFontSize(10);
-        doc.setTextColor(255, 255, 255);
-        doc.text(repName, 15, leftY + 6);
-        if (repPosition) {
-            doc.setFontSize(8);
-            doc.setTextColor(200, 200, 200);
-            doc.text(repPosition, 15, leftY + 11);
-        }
-        if (repMobile) {
-            doc.setFontSize(8);
-            doc.setTextColor(150, 160, 175);
-            doc.text(repMobile, 15, leftY + 16);
-        }
-    }
-
-    // Main Content (Right Side)
-    const contentX = (pageWidth * 0.35) + 20;
-    
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.setFontSize(36);
-    doc.text("SERVICE", contentX, 100);
-    doc.text("AGREEMENT", contentX, 115);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.text("PROFESSIONAL SERVICES CONTRACT", contentX, 130);
-
-    doc.setFontSize(11);
-    doc.setTextColor(80, 80, 80);
-    const projectTitleLines = doc.splitTextToSize(projectTitle || 'General Consultation', pageWidth - contentX - margin);
-    doc.text(projectTitleLines, contentX, 145);
-
-    // Financial Box on Cover
-    const fee = parseFloat(baseFee) || 0;
-    const vat = fee * 0.15;
-    const total = fee + vat;
-
-    if (total > 0) {
-        const boxY = 200;
-        doc.setDrawColor(220, 220, 220);
-        doc.setFillColor(250, 250, 250);
-        doc.roundedRect(contentX, boxY, 100, 35, 3, 3, 'FD');
-        
-        doc.setFontSize(9);
-        doc.setTextColor(100, 100, 100);
-        doc.text("TOTAL CONTRACT VALUE", contentX + 8, boxY + 12);
-        
-        doc.setFontSize(16);
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.setFont("helvetica", "bold");
-        doc.text(`${total.toLocaleString()} SAR`, contentX + 8, boxY + 24);
-    }
-
-    // --- SUBSEQUENT PAGES ---
-    const addHeader = () => {
-        doc.setFontSize(8);
-        doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-        doc.setFont("helvetica", "normal");
-        doc.text("SafaArban Strategic Services Agreement", margin, 15);
-        doc.text(`Ref: ${refId}`, pageWidth - margin, 15, { align: 'right' });
-        doc.setDrawColor(230, 230, 230);
-        doc.line(margin, 18, pageWidth - margin, 18);
+    const opt = {
+      margin: 0,
+      filename: `SafaArban_Agreement_${clientName.replace(/\s+/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    const addFooter = (pageNumber: number) => {
-        doc.setDrawColor(230, 230, 230);
-        doc.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
-        
-        doc.setFontSize(7);
-        doc.setTextColor(100, 100, 100);
-        
-        const footerAddress = "Harun Al Rashid Road Al Jazeerah district , RIYADH 14216, SAUDI ARABIA © RIYADH, KINGDOM OF SAUDI ARABIA";
-        const footerCompliance = `CR: 1010989782 | VAT: 300054882100003 | Page ${pageNumber}`;
-        
-        doc.text(footerAddress, margin, pageHeight - 12);
-        doc.text(footerCompliance, pageWidth - margin, pageHeight - 12, { align: 'right' });
-    };
-
-    doc.addPage();
-    let y = 30;
-    let pageNum = 2;
-    addHeader();
-    addFooter(pageNum);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-
-    const splitText = agreementText.split('\n');
-    
-    splitText.forEach((line) => {
-        if (y > pageHeight - 40) {
-            doc.addPage();
-            pageNum++;
-            addHeader();
-            addFooter(pageNum);
-            y = 30;
-        }
-
-        const isHeader = /^\d+\./.test(line) || (/^[A-Z]/.test(line) && line.length > 5);
-        const isBullet = line.trim().startsWith('-') || line.trim().startsWith('•');
-
-        if (isHeader) {
-            y += 5;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(11);
-            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.text(line, margin, y);
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            doc.setTextColor(60, 60, 60);
-            y += 7;
-        } else if (isBullet) {
-            const cleanLine = line.replace(/^[-•]\s*/, '');
-            const lines = doc.splitTextToSize(cleanLine, pageWidth - (margin * 2) - 5);
-            
-            doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-            doc.circle(margin + 2, y - 1, 1, 'F');
-            doc.text(lines, margin + 6, y);
-            y += (lines.length * 5) + 3;
-        } else {
-            const lines = doc.splitTextToSize(line, pageWidth - (margin * 2));
-            doc.text(lines, margin, y);
-            y += (lines.length * 5) + 2;
-        }
-    });
-
-    // Signature Block
-    if (y > pageHeight - 60) {
-        doc.addPage();
-        pageNum++;
-        addHeader();
-        addFooter(pageNum);
-        y = 30;
+    if ((window as any).html2pdf) {
+        (window as any).html2pdf().set(opt).from(element).save().then(() => {
+            setIsDownloading(false);
+        }).catch((err: any) => {
+            console.error(err);
+            setIsDownloading(false);
+        });
     } else {
-        y += 20;
+        window.print();
+        setIsDownloading(false);
     }
-
-    doc.setDrawColor(200, 200, 200);
-    doc.setFillColor(252, 252, 252);
-    doc.rect(margin, y, pageWidth - (margin * 2), 40, 'FD');
-    
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(100, 100, 100);
-    doc.text("SIGNED FOR SAFAARBAN", margin + 10, y + 10);
-    doc.text("SIGNED FOR CLIENT", margin + 90, y + 10);
-
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text("_______________________", margin + 10, y + 30);
-    doc.text("_______________________", margin + 90, y + 30);
-    
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    
-    // SafaArban Signatory
-    const safaSignatory = repName || "Authorized Signatory";
-    const safaPosition = repPosition || "Chief Strategy Officer";
-    doc.text(safaSignatory, margin + 10, y + 35);
-    doc.text(safaPosition, margin + 10, y + 39);
-
-    // Client Signatory
-    doc.text(clientName, margin + 90, y + 35);
-    doc.text("Authorized Signatory", margin + 90, y + 39);
-
-    doc.save(`Agreement_${clientName.replace(/\s+/g, '_')}.pdf`);
-    setIsDownloading(false);
   };
 
+  const [activeSection, setActiveSection] = useState<'details' | 'scope' | 'finance'>('details');
+
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-300 font-sans flex flex-col">
+    <div className="min-h-screen bg-[#0B1120] text-slate-300 font-sans flex flex-col">
       {/* Header */}
       <header className="bg-[#0f172a] border-b border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
          <div className="flex items-center gap-4">
@@ -490,114 +288,180 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
                     </div>
 
                     <div className="space-y-5">
-                        <div className="group">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
-                                <User size={12} className="inline mr-1" /> Second Party (Client)
-                            </label>
-                            <input 
-                                type="text" 
-                                value={clientName}
-                                onChange={(e) => setClientName(e.target.value)}
-                                placeholder="Company Name / Individual Name" 
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-[#E94E4E] outline-none transition-all placeholder:text-slate-600 font-bold"
-                            />
+                        {/* Section Tabs */}
+                        <div className="bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-700 flex mb-4">
+                            {[
+                                { id: 'details', label: 'Client', icon: User },
+                                { id: 'scope', label: 'Scope', icon: Briefcase },
+                                { id: 'finance', label: 'Finance', icon: Calculator }
+                            ].map(tab => (
+                                <button
+                                key={tab.id}
+                                onClick={() => setActiveSection(tab.id as any)}
+                                className={`flex-1 py-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                                    activeSection === tab.id 
+                                    ? 'bg-[#E94E4E] text-white shadow-md' 
+                                    : 'text-slate-400 hover:bg-slate-700'
+                                }`}
+                                >
+                                    <tab.icon size={14} /> {tab.label}
+                                </button>
+                            ))}
                         </div>
 
-                        {/* SafaArban Representative Details */}
-                        <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700 space-y-4">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 block flex items-center gap-2">
-                                <ShieldCheck size={12} /> SafaArban Representative
-                            </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <input 
-                                    type="text" 
-                                    value={repName}
-                                    onChange={(e) => setRepName(e.target.value)}
-                                    placeholder="Name" 
-                                    className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-xs text-white focus:border-emerald-500 outline-none"
-                                />
-                                <input 
-                                    type="text" 
-                                    value={repPosition}
-                                    onChange={(e) => setRepPosition(e.target.value)}
-                                    placeholder="Position" 
-                                    className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-xs text-white focus:border-emerald-500 outline-none"
-                                />
-                            </div>
-                            <input 
-                                type="text" 
-                                value={repMobile}
-                                onChange={(e) => setRepMobile(e.target.value)}
-                                placeholder="Mobile Number" 
-                                className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-xs text-white focus:border-emerald-500 outline-none"
-                            />
-                        </div>
+                        {/* DYNAMIC FORMS */}
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-6">
+                            {activeSection === 'details' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
+                                    <div className="group">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
+                                            <User size={12} className="inline mr-1" /> Second Party (Client)
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            value={clientName}
+                                            onChange={(e) => setClientName(e.target.value)}
+                                            placeholder="Company Name / Individual Name" 
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-[#E94E4E] outline-none transition-all placeholder:text-slate-600 font-bold"
+                                        />
+                                    </div>
 
-                        <div className="group">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
-                                <Edit3 size={12} className="inline mr-1" /> Project Title
-                            </label>
-                            <input 
-                                list="services-list"
-                                type="text" 
-                                value={projectTitle}
-                                onChange={(e) => setProjectTitle(e.target.value)}
-                                placeholder="Select service or type custom title..." 
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-[#E94E4E] outline-none transition-all placeholder:text-slate-600 font-bold"
-                            />
-                            <datalist id="services-list">
-                                {SERVICES_DB.map((service) => (
-                                    <option key={service.id} value={service.name} />
-                                ))}
-                            </datalist>
-                        </div>
+                                    {/* SafaArban Representative Details */}
+                                    <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700 space-y-4">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 block flex items-center gap-2">
+                                            <ShieldCheck size={12} /> SafaArban Representative
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input 
+                                                type="text" 
+                                                value={repName}
+                                                onChange={(e) => setRepName(e.target.value)}
+                                                placeholder="Name" 
+                                                className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-xs text-white focus:border-emerald-500 outline-none"
+                                            />
+                                            <input 
+                                                type="text" 
+                                                value={repPosition}
+                                                onChange={(e) => setRepPosition(e.target.value)}
+                                                placeholder="Position" 
+                                                className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-xs text-white focus:border-emerald-500 outline-none"
+                                            />
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            value={repMobile}
+                                            onChange={(e) => setRepMobile(e.target.value)}
+                                            placeholder="Mobile Number" 
+                                            className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-xs text-white focus:border-emerald-500 outline-none"
+                                        />
+                                    </div>
+                                    
+                                    <div className="group">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
+                                            <Globe size={12} className="inline mr-1" /> Languages ({selectedLanguages.length}/3)
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {LANGUAGES.map(lang => (
+                                                <button
+                                                    key={lang}
+                                                    onClick={() => toggleLanguage(lang)}
+                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                                                        selectedLanguages.includes(lang) 
+                                                        ? 'bg-[#E94E4E] text-white border-[#E94E4E] shadow-lg shadow-red-900/20' 
+                                                        : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-300'
+                                                    }`}
+                                                >
+                                                    {lang}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
-                        <div className="group">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
-                                <Globe size={12} className="inline mr-1" /> Languages ({selectedLanguages.length}/3)
-                            </label>
-                            <div className="flex flex-wrap gap-2">
-                                {LANGUAGES.map(lang => (
-                                    <button
-                                        key={lang}
-                                        onClick={() => toggleLanguage(lang)}
-                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                                            selectedLanguages.includes(lang) 
-                                            ? 'bg-[#E94E4E] text-white border-[#E94E4E] shadow-lg shadow-red-900/20' 
-                                            : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-300'
-                                        }`}
-                                    >
-                                        {lang}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                            {activeSection === 'scope' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
+                                    <div className="group">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
+                                            <Edit3 size={12} className="inline mr-1" /> Project Title
+                                        </label>
+                                        <input 
+                                            list="services-list"
+                                            type="text" 
+                                            value={projectTitle}
+                                            onChange={(e) => setProjectTitle(e.target.value)}
+                                            placeholder="Select service or type custom title..." 
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-[#E94E4E] outline-none transition-all placeholder:text-slate-600 font-bold"
+                                        />
+                                        <datalist id="services-list">
+                                            {SERVICES_DB.map((service) => (
+                                                <option key={service.id} value={service.name} />
+                                            ))}
+                                        </datalist>
+                                    </div>
 
-                        <div className="group">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
-                                <DollarSign size={12} className="inline mr-1" /> Professional Fee (SAR)
-                            </label>
-                            <div className="flex gap-2 items-center">
-                                <input 
-                                    type="number" 
-                                    value={baseFee}
-                                    onChange={(e) => setBaseFee(e.target.value)}
-                                    placeholder="0.00" 
-                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-[#E94E4E] outline-none transition-all placeholder:text-slate-600 font-bold font-mono"
-                                />
-                            </div>
-                        </div>
+                                    <div className="group">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
+                                            <Bot size={12} className="inline mr-1" /> Specific Scope / Notes
+                                        </label>
+                                        <textarea 
+                                            value={prompt}
+                                            onChange={(e) => setPrompt(e.target.value)}
+                                            placeholder="E.g. 'Include milestones for payment', 'Specific deliverables for Phase 1'..."
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-[#E94E4E] outline-none transition-all placeholder:text-slate-600 min-h-[150px] resize-none leading-relaxed"
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
-                        <div className="group">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
-                                <Bot size={12} className="inline mr-1" /> Specific Scope / Notes
-                            </label>
-                            <textarea 
-                                value={prompt}
-                                onChange={(e) => setPrompt(e.target.value)}
-                                placeholder="E.g. 'Include milestones for payment', 'Specific deliverables for Phase 1'..."
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-[#E94E4E] outline-none transition-all placeholder:text-slate-600 min-h-[100px] resize-none leading-relaxed"
-                            />
+                            {activeSection === 'finance' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
+                                    <div className="group">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block group-focus-within:text-[#E94E4E] transition-colors">
+                                            <DollarSign size={12} className="inline mr-1" /> Professional Fee (SAR)
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            value={baseFee}
+                                            onChange={(e) => setBaseFee(e.target.value)}
+                                            placeholder="0.00" 
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-[#E94E4E] outline-none transition-all placeholder:text-slate-600 font-bold font-mono"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] text-slate-500 uppercase font-bold mb-2 block">Payment Terms</label>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {[
+                                                {id: 'standard', label: 'Standard (40/30/30)'}, 
+                                                {id: '50-50', label: 'Split (50/50)'}, 
+                                                {id: 'upfront', label: 'Full Upfront (100%)'}
+                                            ].map((term) => (
+                                                <button 
+                                                    key={term.id} 
+                                                    onClick={() => setPaymentTerms(term.id as any)} 
+                                                    className={`py-3 px-4 rounded-lg text-xs font-bold uppercase border text-left transition-all ${paymentTerms === term.id ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 'bg-slate-900 border-slate-600 text-slate-400 hover:bg-slate-800'}`}
+                                                >
+                                                    {term.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Payment Schedule Preview in UI */}
+                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                                        <p className="text-[10px] font-bold uppercase text-slate-500 mb-2">Schedule Preview</p>
+                                        <div className="space-y-2">
+                                          {getPaymentSchedule().map((sch, i) => (
+                                            <div key={i} className="flex justify-between text-xs text-slate-300">
+                                              <span>{sch.name} <span className="text-slate-500 text-[10px]">({sch.pct})</span></span>
+                                              <span className="font-mono">{sch.amount.toLocaleString()} SAR</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -653,7 +517,7 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
                     </div>
                     <div>
                         <h3 className="text-sm font-bold text-white">Live Preview</h3>
-                        <p className="text-[10px] text-slate-500">Auto-saves locally</p>
+                        <p className="text-[10px] text-slate-500">A4 Render Layout</p>
                     </div>
                 </div>
                 
@@ -679,7 +543,7 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
             </div>
 
             {agreementText ? (
-                <div className="flex-1 flex flex-col h-full relative z-10">
+                <div className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
                     {/* Clause Quick-Insert Bar */}
                     <div className="mb-4">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1">
@@ -699,27 +563,84 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
                         </div>
                     </div>
                     
-                    {/* Document Paper */}
-                    <div className="bg-white text-slate-800 rounded-sm shadow-2xl flex-1 relative overflow-hidden flex flex-col max-w-4xl mx-auto w-full border border-slate-300">
-                        {/* Paper Texture/Header Simulation */}
-                        <div className="h-2 bg-[#0D2B4F] w-full"></div>
-                        
-                        <div className="flex-1 relative overflow-y-auto custom-scrollbar">
-                            <textarea 
-                                ref={textAreaRef}
-                                value={agreementText}
-                                onChange={(e) => setAgreementText(e.target.value)}
-                                className="w-full h-full p-12 bg-transparent border-none outline-none resize-none font-serif text-sm leading-loose whitespace-pre-wrap text-slate-900"
-                                placeholder="Generated text will appear here..."
-                                spellCheck={false}
-                                dir="auto"
-                            />
-                        </div>
+                    {/* Document Paper (PRINTABLE AREA) */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar flex justify-center bg-slate-900 p-4">
+                        <div 
+                            id="printable-agreement-content" 
+                            className="bg-white text-slate-900 w-[210mm] min-h-[297mm] shadow-2xl relative flex flex-col"
+                        >
+                            {/* Header Section (Visible on Paper) */}
+                            <div className="px-12 pt-12 pb-6 border-b-2 border-[#0D2B4F]">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <img src={LOGO_DATA_URI} alt="SafaArban Logo" className="h-12 w-auto mb-4" />
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Strategic Advisory & Licensing</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <h1 className="text-4xl font-black text-[#0D2B4F] tracking-tighter">AGREEMENT</h1>
+                                        <p className="text-sm font-bold text-[#E94E4E]">SERVICE CONTRACT</p>
+                                        <p className="text-[10px] font-mono mt-2 text-slate-500">Ref: {`SA-${new Date().getFullYear()}-${Math.floor(1000+Math.random()*9000)}`}</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                        {/* Footer Simulation */}
-                        <div className="h-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between px-6 text-[9px] text-slate-400 uppercase font-bold tracking-widest">
-                            <span>SafaArban Legal</span>
-                            <span>{repName ? `Prepared by: ${repName}` : 'Page 1 of 1'}</span>
+                            {/* Client & Rep Box */}
+                            <div className="px-12 py-6 bg-slate-50 border-b border-slate-200">
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div>
+                                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">First Party (Service Provider)</p>
+                                        <p className="font-bold text-[#0D2B4F] text-sm">SafaArban Ltd</p>
+                                        <p className="text-xs text-slate-600">Rep: {repName} ({repPosition})</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Second Party (Client)</p>
+                                        <p className="font-bold text-[#0D2B4F] text-sm">{clientName}</p>
+                                        <p className="text-xs text-slate-600">Project: {projectTitle || 'Business Setup'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Main Content (Editable) */}
+                            <div className="flex-1 px-12 py-8 relative">
+                                <textarea 
+                                    ref={textAreaRef}
+                                    value={agreementText}
+                                    onChange={(e) => setAgreementText(e.target.value)}
+                                    className="w-full h-full resize-none border-none outline-none font-serif text-sm leading-loose whitespace-pre-wrap text-slate-800 bg-transparent"
+                                    placeholder="Agreement text..."
+                                    spellCheck={false}
+                                    dir="auto"
+                                    style={{ minHeight: '500px' }} // Ensure height for PDF
+                                />
+                            </div>
+
+                            {/* Signature Block (Fixed Bottom) */}
+                            <div className="px-12 pb-16 pt-8 mt-auto break-inside-avoid">
+                                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                                    <div className="grid grid-cols-2 gap-12">
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-8">Signed for SafaArban</p>
+                                            <div className="border-b border-slate-400 mb-2"></div>
+                                            <p className="font-bold text-xs text-[#0D2B4F]">{repName}</p>
+                                            <p className="text-[10px] text-slate-500">{repPosition}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-8">Signed for Client</p>
+                                            <div className="border-b border-slate-400 mb-2"></div>
+                                            <p className="font-bold text-xs text-[#0D2B4F]">{clientName}</p>
+                                            <p className="text-[10px] text-slate-500">Authorized Signatory</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-6 text-center">
+                                    <p className="text-[8px] text-slate-400 uppercase font-bold tracking-widest">
+                                        This document is digitally generated and legally binding in the Kingdom of Saudi Arabia.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {/* Bottom Color Bar */}
+                            <div className="h-2 bg-[#0D2B4F] w-full"></div>
                         </div>
                     </div>
                 </div>
@@ -736,6 +657,9 @@ const AgreementGenerator: React.FC<AgreementGeneratorProps> = ({ onBack }) => {
             )}
          </div>
       </div>
+      <style>{`
+        .font-handwriting { font-family: 'Brush Script MT', cursive; }
+      `}</style>
     </div>
   );
 };

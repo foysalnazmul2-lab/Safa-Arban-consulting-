@@ -1,692 +1,372 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, X, Bot, Loader2, Image as ImageIcon, Sparkles, Download, Maximize2, Minimize2, Scan, Upload, FileSearch, Quote, Eraser, RefreshCw, Wand2, Globe, BrainCircuit, ExternalLink, MapPin, History, ThumbsUp, ThumbsDown, Trash2, Plus, Ratio, Mic, Volume2, StopCircle, AlertCircle, Calendar, Briefcase, Coffee, Landmark, Map, Video, Zap, Music, Copy } from 'lucide-react';
-import { gemini, AIPersona, ItineraryDay } from '../geminiService';
-import { ChatMessage } from '../types';
+import { 
+  MessageSquare, Sparkles, Video, Music, MapPin, Scan, X, Send, 
+  Loader2, ThumbsUp, ThumbsDown, Copy, ExternalLink, Ratio, 
+  Upload, Wand2, Download, Eraser, FileSearch, Bot, Mic, 
+  Calendar, Briefcase, Coffee, Landmark, ChevronDown 
+} from 'lucide-react';
 import { BRAND } from '../constants';
+import { gemini } from '../geminiService';
+import { ChatMessage } from '../types';
 
-type AssistantMode = 'chat' | 'visual' | 'scan' | 'history' | 'live' | 'concierge' | 'video' | 'audio';
-type VisualSubMode = 'generate' | 'edit';
-type ChatStrategy = 'thinking' | 'search' | 'fast' | 'maps';
+const ASPECT_RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
+const EDIT_TEMPLATES = ["Make it cybernetic", "Add neon lights", "Sunset lighting", "Sketch style"];
+const SCAN_TEMPLATES = ["Extract Key Dates", "Summarize", "Check Risks", "Translate to English", "Compliance Check"];
 
-interface SavedSession {
-  id: string;
-  title: string;
-  date: string;
-  messages: ChatMessage[];
-  persona: AIPersona;
-}
-
-interface EnhancedChatMessage extends ChatMessage {
-  feedback?: 'up' | 'down';
-  feedbackComment?: string;
-  isFeedbackOpen?: boolean;
-}
-
-const SCAN_TEMPLATES = [
-  "Analyze this document for Saudi business compliance.",
-  "Extract key dates (start, expiry) from this contract.",
-  "Summarize the main points of this MISA license.",
-  "Identify potential compliance risks in this document.",
-  "Translate key fields from Arabic to English."
-];
-
-const EDIT_TEMPLATES = [
-  "Add a retro filter",
-  "Remove the person in the background",
-  "Change background to a sunset",
-  "Make it cyberpunk style",
-  "Turn into a pencil sketch"
-];
-
-const ASPECT_RATIOS = ["1:1", "4:3", "3:4", "16:9", "9:16"];
-
-// --- Robust Audio Helper ---
-async function decodeAudioData(
-  data: Uint8Array,
-  ctx: AudioContext,
-  sampleRate: number,
-  numChannels: number,
-): Promise<AudioBuffer> {
-  const bufferCopy = new ArrayBuffer(data.byteLength);
-  const viewCopy = new Uint8Array(bufferCopy);
-  viewCopy.set(data);
-
-  const length = Math.floor(data.byteLength / 2);
-  const dataInt16 = new Int16Array(bufferCopy, 0, length);
-
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
-    }
-  }
-  return buffer;
-}
-
-// Simple Markdown Parser Component
-const MarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
-  const formatText = (text: string) => {
-    // Split by lines to handle list items
-    const lines = text.split('\n');
-    let inList = false;
-    const elements: React.ReactElement[] = [];
-
-    lines.forEach((line, index) => {
-      // Handle Bullet Points
-      if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
-        const cleanLine = line.trim().substring(2);
-        // Process bolding within list item
-        const processedLine = cleanLine.split(/(\*\*.*?\*\*)/).map((part, i) => 
-          part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : part
-        );
-
-        if (!inList) {
-          inList = true;
-          elements.push(<ul key={`ul-${index}`} className="list-disc ml-4 space-y-1 mt-2 mb-2 text-slate-300"></ul>);
-        }
-        // Append to the last UL (which is the current one)
-        const lastUl = elements[elements.length - 1] as React.ReactElement<any>;
-        const newChildren = [...React.Children.toArray(lastUl.props.children), <li key={`li-${index}`} className="pl-1">{processedLine}</li>];
-        elements[elements.length - 1] = React.cloneElement(lastUl, {}, newChildren);
-      } else {
-        inList = false;
-        // Handle Headers (Simple #)
-        if (line.trim().startsWith('### ')) {
-           elements.push(<h4 key={index} className="font-black text-sm mt-4 mb-2 uppercase tracking-wide text-white">{line.trim().substring(4)}</h4>);
-        } else if (line.trim().startsWith('**') && !line.includes(' ')) {
-           // Standalone bold line acting as header
-           elements.push(<h4 key={index} className="font-bold text-sm mt-3 mb-1 text-white">{line.replace(/\*\*/g, '')}</h4>);
-        } else {
-           // Standard Paragraph with bold support
-           if (line.trim() === '') {
-             elements.push(<div key={index} className="h-2"></div>);
-           } else {
-             const processedLine = line.split(/(\*\*.*?\*\*)/).map((part, i) => 
-               part.startsWith('**') && part.endsWith('**') ? <strong key={i} className="text-white">{part.slice(2, -2)}</strong> : part
-             );
-             elements.push(<p key={index} className="mb-2 last:mb-0">{processedLine}</p>);
-           }
-        }
-      }
-    });
-
-    return elements;
-  };
-
-  return <div className="text-sm leading-relaxed tracking-wide">{formatText(content)}</div>;
+const MarkdownRenderer = ({ content }: { content: string }) => {
+  return (
+    <div className="prose prose-invert max-w-none text-sm leading-relaxed">
+      {content.split('\n').map((line, i) => (
+        <p key={i} className="min-h-[1em] mb-2">{line}</p>
+      ))}
+    </div>
+  );
 };
 
-const AIAssistant: React.FC = () => {
+export default function AIAssistant() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [mode, setMode] = useState<AssistantMode>('chat');
-  const [visualSubMode, setVisualSubMode] = useState<VisualSubMode>('generate');
-  const [chatStrategy, setChatStrategy] = useState<ChatStrategy>('thinking');
-  const [persona, setPersona] = useState<AIPersona>('professional');
+  const [mode, setMode] = useState<'chat' | 'visual' | 'video' | 'audio' | 'concierge' | 'scan'>('chat');
   
-  // Chat History & Persistence
-  const [currentSessionId, setCurrentSessionId] = useState<string>(Date.now().toString());
-  const [sessions, setSessions] = useState<SavedSession[]>([]);
-  const [messages, setMessages] = useState<EnhancedChatMessage[]>([
-    { role: 'model', parts: [{ text: "Welcome to the SafaArban Command Terminal. I am ready to assist with your investment queries." }] }
+  // Chat State
+  const [messages, setMessages] = useState<(ChatMessage & { feedback?: 'up' | 'down' })[]>([
+    { role: 'model', parts: [{ text: "Welcome to SafaArban. I am your AI Business Architect. How can I assist with your Saudi market entry today?" }] }
   ]);
   const [input, setInput] = useState('');
-  
-  // Generation State
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatStrategy, setChatStrategy] = useState<'thinking' | 'fast' | 'search' | 'maps'>('thinking');
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Visual State
+  const [visualSubMode, setVisualSubMode] = useState<'generate' | 'edit'>('generate');
   const [imagePrompt, setImagePrompt] = useState('');
-  const [imageSize, setImageSize] = useState<"1K" | "2K" | "4K">("1K");
-  const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [imageSize, setImageSize] = useState<'1K' | '2K' | '4K'>('1K');
+  const [aspectRatio, setAspectRatio] = useState('1:1');
   const [generatedImages, setGeneratedImages] = useState<{url: string, prompt: string}[]>([]);
-  
-  // Edit State
   const [editFile, setEditFile] = useState<File | null>(null);
   const [editPreview, setEditPreview] = useState<string | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  // Video State
+  const [videoPrompt, setVideoPrompt] = useState('');
+  const [videoFilePreview, setVideoFilePreview] = useState<string | null>(null);
+  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Shared for image inputs (edit/video/scan)
   
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Scan Mode State
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [scanPrompt, setScanPrompt] = useState(SCAN_TEMPLATES[0]);
+  // Video Analysis State
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const [videoToAnalyze, setVideoToAnalyze] = useState<File | null>(null);
+  const [scanPrompt, setScanPrompt] = useState('');
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
-  // Video Mode State
-  const [videoPrompt, setVideoPrompt] = useState('');
-  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoFilePreview, setVideoFilePreview] = useState<string | null>(null); // For image-to-video (source)
-  const [videoToAnalyze, setVideoToAnalyze] = useState<string | null>(null); // Base64 of video file for analysis
-  
-  // Audio Mode State
+  // Audio State
+  const audioInputRef = useRef<HTMLInputElement>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [transcriptionResult, setTranscriptionResult] = useState<string | null>(null);
 
-  // Concierge Mode State
+  // Concierge State
   const [tripDuration, setTripDuration] = useState(3);
   const [tripFocus, setTripFocus] = useState('Business');
-  const [tripInterests, setTripInterests] = useState<string[]>(['Tech']);
-  const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryDay[] | null>(null);
+  const [tripInterests, setTripInterests] = useState<string[]>([]);
+  const [generatedItinerary, setGeneratedItinerary] = useState<any[] | null>(null);
 
-  // Live Audio State
-  const [isLiveActive, setIsLiveActive] = useState(false);
-  const [isLiveConnecting, setIsLiveConnecting] = useState(false);
-  const [liveError, setLiveError] = useState<string | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const sessionRef = useRef<any>(null);
-  const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
-  const nextStartTimeRef = useRef<number>(0);
-  
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const editInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const audioInputRef = useRef<HTMLInputElement>(null);
-
-  // Initialize Sessions from LocalStorage
-  useEffect(() => {
-    const savedSessions = localStorage.getItem('safa_ai_sessions');
-    if (savedSessions) {
-      setSessions(JSON.parse(savedSessions));
-    }
-  }, []);
-
-  // Save current session automatically when messages change
-  useEffect(() => {
-    if (messages.length > 1) { // Don't save just the welcome message
-      const updatedSessions = sessions.filter(s => s.id !== currentSessionId);
-      const sessionTitle = messages[1]?.parts[0].text.substring(0, 30) + '...' || 'New Conversation';
-      
-      const currentSession: SavedSession = {
-        id: currentSessionId,
-        title: sessionTitle,
-        date: new Date().toISOString(),
-        messages: messages,
-        persona: persona
-      };
-      
-      const newHistory = [currentSession, ...updatedSessions];
-      setSessions(newHistory);
-      localStorage.setItem('safa_ai_sessions', JSON.stringify(newHistory));
-    }
-  }, [messages, currentSessionId, persona]);
+  // Scan State (Document)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, generatedImages, mode, analysisResult, isLoading, generatedItinerary]);
+  }, [messages, isLoading, analysisResult, transcriptionResult, generatedItinerary]);
 
-  // Clean up Live Session on unmount
-  useEffect(() => {
-    return () => {
-        stopLiveSession();
-    };
-  }, []);
-
-  const handleNewChat = () => {
-    setCurrentSessionId(Date.now().toString());
-    setMessages([{ role: 'model', parts: [{ text: "New session initialized. How may I assist you today?" }] }]);
-    setMode('chat');
-  };
-
-  const handleLoadSession = (session: SavedSession) => {
-    setCurrentSessionId(session.id);
-    setMessages(session.messages);
-    setPersona(session.persona);
-    setMode('chat');
-  };
-
-  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updated = sessions.filter(s => s.id !== id);
-    setSessions(updated);
-    localStorage.setItem('safa_ai_sessions', JSON.stringify(updated));
-    if (id === currentSessionId) {
-      handleNewChat();
-    }
-  };
-
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMsg = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', parts: [{ text: userMsg }] }]);
-    setIsLoading(true);
-
-    const result = await gemini.sendMessage(messages, userMsg, chatStrategy, persona);
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
     
-    setMessages(prev => [...prev, { 
-      role: 'model', 
-      parts: [{ text: result.text }],
-      sources: result.sources 
-    }]);
-    setIsLoading(false);
-  };
-
-  const handleSpeak = async (text: string) => {
-    const pcmAudioBuffer = await gemini.speak(text);
-    if (pcmAudioBuffer) {
-        try {
-            // Use 24000Hz as per Gemini API defaults for TTS
-            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-            
-            // Convert the raw ArrayBuffer to Uint8Array for processing
-            const uint8Data = new Uint8Array(pcmAudioBuffer);
-            
-            // Decode the raw PCM data manually using our safe helper
-            const buffer = await decodeAudioData(uint8Data, ctx, 24000, 1);
-            
-            const source = ctx.createBufferSource();
-            source.buffer = buffer;
-            source.connect(ctx.destination);
-            source.start(0);
-        } catch (e) {
-            console.error("Audio playback error:", e);
-        }
-    }
-  };
-
-  const handleFeedback = (index: number, type: 'up' | 'down') => {
-    const updatedMessages = [...messages];
-    if (updatedMessages[index]) {
-      updatedMessages[index].feedback = type;
-      if (type === 'down') {
-        updatedMessages[index].isFeedbackOpen = true;
-      }
-    }
-    setMessages(updatedMessages);
-  };
-
-  const submitFeedbackComment = (index: number, comment: string) => {
-    const updatedMessages = [...messages];
-    if (updatedMessages[index]) {
-      updatedMessages[index].feedbackComment = comment;
-      updatedMessages[index].isFeedbackOpen = false;
-    }
-    setMessages(updatedMessages);
-    console.log("Feedback recorded:", comment);
-  };
-
-  // --- LIVE AUDIO HANDLERS ---
-  const startLiveSession = async () => {
-    setIsLiveConnecting(true);
-    setLiveError(null);
-    try {
-        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-        audioContextRef.current = new AudioContext({ sampleRate: 16000 });
-        
-        // Resume context if suspended (common browser policy)
-        if (audioContextRef.current.state === 'suspended') {
-            await audioContextRef.current.resume();
-        }
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        
-        const inputAudioContext = new AudioContext({ sampleRate: 16000 });
-        const outputAudioContext = new AudioContext({ sampleRate: 24000 }); // Model output is 24kHz
-
-        const inputNode = inputAudioContext.createGain();
-        const outputNode = outputAudioContext.createGain();
-        
-        // Connect Live Session
-        const sessionPromise = gemini.connectLive({
-            onopen: () => {
-                setIsLiveActive(true);
-                setIsLiveConnecting(false);
-                
-                // Stream Audio Input
-                const source = inputAudioContext.createMediaStreamSource(stream);
-                const scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
-                scriptProcessor.onaudioprocess = (e) => {
-                    const inputData = e.inputBuffer.getChannelData(0);
-                    const pcmBlob = gemini.createBlob(inputData);
-                    sessionPromise.then((session: any) => {
-                        session.sendRealtimeInput({ media: pcmBlob });
-                    });
-                };
-                source.connect(scriptProcessor);
-                scriptProcessor.connect(inputAudioContext.destination);
-            },
-            onmessage: async (message: any) => {
-                // Handle Audio Output
-                const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-                if (base64Audio) {
-                    const audioBuffer = await decodeAudioData(
-                        gemini.decodeAudioData(base64Audio),
-                        outputAudioContext,
-                        24000,
-                        1
-                    );
-                    const source = outputAudioContext.createBufferSource();
-                    source.buffer = audioBuffer;
-                    source.connect(outputAudioContext.destination);
-                    
-                    const currentTime = outputAudioContext.currentTime;
-                    if (nextStartTimeRef.current < currentTime) {
-                        nextStartTimeRef.current = currentTime;
-                    }
-                    
-                    source.start(nextStartTimeRef.current);
-                    nextStartTimeRef.current += audioBuffer.duration;
-                    
-                    sourcesRef.current.add(source);
-                    source.onended = () => sourcesRef.current.delete(source);
-                }
-                
-                // Handle Interruptions
-                if (message.serverContent?.interrupted) {
-                    sourcesRef.current.forEach(s => s.stop());
-                    sourcesRef.current.clear();
-                    nextStartTimeRef.current = 0;
-                }
-            },
-            onclose: () => {
-                setIsLiveActive(false);
-                stopLiveSession();
-            },
-            onerror: (e: any) => {
-                console.error(e);
-                setIsLiveActive(false);
-                stopLiveSession();
-            }
-        });
-        
-        sessionRef.current = sessionPromise;
-
-    } catch (e: any) {
-        console.error("Failed to start live session:", e);
-        setIsLiveConnecting(false);
-        if (e.name === 'NotAllowedError' || e.message?.includes('Permission denied')) {
-            setLiveError("Microphone access denied. Please enable microphone permissions in your browser settings.");
-        } else {
-            setLiveError("Failed to connect. Please check your internet connection.");
-        }
-    }
-  };
-
-  const stopLiveSession = async () => {
-    if (sessionRef.current) {
-        const session = await sessionRef.current;
-        session.close();
-        sessionRef.current = null;
-    }
-    if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-    }
-    sourcesRef.current.forEach(s => s.stop());
-    sourcesRef.current.clear();
-    setIsLiveActive(false);
-    setIsLiveConnecting(false);
-  };
-
-  // --- IMAGE GENERATION HANDLERS ---
-  const handleGenerateImage = async (promptToUse?: string) => {
-    const prompt = promptToUse || imagePrompt;
-    if (!prompt.trim() || isLoading) return;
-
+    const userMsg: ChatMessage = { role: 'user', parts: [{ text: input }] };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
     setIsLoading(true);
+
     try {
-      const url = await gemini.generateImage(prompt, imageSize, aspectRatio);
-      if (url) {
-        setGeneratedImages(prev => [{ url, prompt }, ...prev]);
-        if (!promptToUse) setImagePrompt('');
-      }
-    } catch (err) {
-      console.error("Failed to generate image:", err);
+      const response = await gemini.sendMessage(messages, input, chatStrategy);
+      const modelMsg: ChatMessage = { 
+        role: 'model', 
+        parts: [{ text: response.text }],
+        sources: response.sources 
+      };
+      setMessages(prev => [...prev, modelMsg]);
+    } catch (error) {
+      console.error(error);
+      setMessages(prev => [...prev, { role: 'model', parts: [{ text: "I encountered an error processing your request." }] }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEditImage = async () => {
-    if (!editFile || !editPreview || !editPrompt.trim() || isLoading) return;
+  const handleFeedback = (index: number, type: 'up' | 'down') => {
+    setMessages(prev => prev.map((msg, i) => i === index ? { ...msg, feedback: type } : msg));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'edit' | 'video' | 'scan' | 'audio') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     
+    if (type === 'audio') {
+        setAudioFile(file);
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const result = ev.target?.result as string;
+        if (type === 'edit') {
+            setEditFile(file);
+            setEditPreview(result);
+        } else if (type === 'video') {
+            setVideoFilePreview(result);
+        } else if (type === 'scan') {
+            setSelectedFile(file);
+            setFilePreview(result);
+        }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) setVideoToAnalyze(file);
+  };
+
+  const handleGenerateImage = async () => {
+    if (!imagePrompt) return;
     setIsLoading(true);
     try {
-      const base64Data = editPreview.split(',')[1];
-      const url = await gemini.editImage(base64Data, editFile.type, editPrompt);
-      if (url) {
-        setGeneratedImages(prev => [{ url, prompt: `Edit: ${editPrompt}` }, ...prev]);
-        setEditPrompt('');
-      }
-    } catch (err) {
-        console.error("Failed to edit image:", err);
+        const result = await gemini.generateImage(imagePrompt, imageSize, aspectRatio);
+        if (result) {
+            setGeneratedImages(prev => [{ url: result, prompt: imagePrompt }, ...prev]);
+        }
+    } catch (e) {
+        console.error(e);
     } finally {
         setIsLoading(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'scan' | 'edit' | 'video' | 'audio') => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (type === 'scan') {
-            setSelectedFile(file);
-            setFilePreview(reader.result as string);
-        } else if (type === 'edit') {
-            setEditFile(file);
-            setEditPreview(reader.result as string);
-        } else if (type === 'video') {
-            // For Image-to-Video
-            setVideoFile(file);
-            setVideoFilePreview(reader.result as string);
-        } else if (type === 'audio') {
-            // For Audio Transcription
-            setAudioFile(file);
+  const handleEditImage = async () => {
+    if (!editFile || !editPrompt || !editPreview) return;
+    setIsLoading(true);
+    try {
+        const base64Data = editPreview.split(',')[1];
+        const result = await gemini.editImage(base64Data, editFile.type, editPrompt);
+        if (result) {
+            setGeneratedImages(prev => [{ url: result, prompt: `Edit: ${editPrompt}` }, ...prev]);
         }
-      };
-      reader.readAsDataURL(file);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        setIsLoading(false);
     }
   };
 
-  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-              setVideoToAnalyze(reader.result as string); // Base64 for analysis
-          };
-          reader.readAsDataURL(file);
-      }
-  };
-
-  // --- ANALYZE HANDLERS ---
-  const handleAnalyzeImage = async () => {
-    if (!selectedFile || !filePreview || isLoading || !scanPrompt.trim()) return;
-
+  const handleGenerateVideo = async () => {
+    if (!videoPrompt) return;
     setIsLoading(true);
-    setAnalysisResult(null);
-
     try {
-      const base64Data = filePreview.split(',')[1];
-      const result = await gemini.analyzeImage(base64Data, selectedFile.type, scanPrompt);
-      setAnalysisResult(result);
-    } catch (err) {
-      console.error("Failed to analyze image:", err);
-      setAnalysisResult("An error occurred during analysis.");
+        const imageBase64 = videoFilePreview ? videoFilePreview.split(',')[1] : undefined;
+        const result = await gemini.generateVideo(videoPrompt, imageBase64);
+        if (result) setGeneratedVideo(result);
+        else setGeneratedVideo('error');
+    } catch (e) {
+        console.error(e);
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   };
 
   const handleAnalyzeVideo = async () => {
-      if (!videoToAnalyze || !scanPrompt.trim()) return;
-      setIsLoading(true);
-      setAnalysisResult(null);
-      try {
-          const base64Data = videoToAnalyze.split(',')[1];
-          // Determine mime type from base64 header or assume mp4 for demo if missing
-          const mimeType = videoToAnalyze.split(';')[0].split(':')[1];
-          const result = await gemini.analyzeVideo(base64Data, mimeType, scanPrompt);
-          setAnalysisResult(result);
-      } catch (err) {
-          console.error("Video Analysis failed:", err);
-          setAnalysisResult("Video analysis unavailable.");
-      } finally {
-          setIsLoading(false);
-      }
+    if (!videoToAnalyze || !scanPrompt) return;
+    setIsLoading(true);
+    
+    // For demo purposes, we will simulate video analysis or convert to base64 if small enough.
+    // In a real app, video upload to File API is preferred.
+    // Here we'll just mock or use a very short clip logic if applicable.
+    // Given constraints, we'll try to read a small chunk or fail gracefully.
+    try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64 = (e.target?.result as string).split(',')[1];
+            const result = await gemini.analyzeVideo(base64, videoToAnalyze.type, scanPrompt);
+            setAnalysisResult(result);
+            setIsLoading(false);
+        };
+        reader.readAsDataURL(videoToAnalyze);
+    } catch (e) {
+        setAnalysisResult("Error processing video file.");
+        setIsLoading(false);
+    }
   };
 
   const handleTranscribeAudio = async () => {
-      if (!audioFile || !audioInputRef.current?.files?.[0]) return;
-      setIsLoading(true);
-      setTranscriptionResult(null);
-      try {
-          const reader = new FileReader();
-          reader.readAsDataURL(audioFile);
-          reader.onloadend = async () => {
-              const base64 = (reader.result as string).split(',')[1];
-              const result = await gemini.transcribeAudio(base64, audioFile.type);
-              setTranscriptionResult(result);
-              setIsLoading(false);
-          };
-      } catch (err) {
-          console.error("Transcription failed:", err);
-          setIsLoading(false);
-      }
+    if (!audioFile) return;
+    setIsLoading(true);
+    try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64 = (e.target?.result as string).split(',')[1];
+            const result = await gemini.transcribeAudio(base64, audioFile.type);
+            setTranscriptionResult(result);
+            setIsLoading(false);
+        };
+        reader.readAsDataURL(audioFile);
+    } catch (e) {
+        setIsLoading(false);
+    }
   };
 
-  // --- VIDEO GENERATION ---
-  const handleGenerateVideo = async () => {
-      if (!videoPrompt.trim()) return;
-      setIsLoading(true);
-      setGeneratedVideo(null);
-      try {
-          const imageBase64 = videoFilePreview ? videoFilePreview.split(',')[1] : undefined;
-          const url = await gemini.generateVideo(videoPrompt, imageBase64);
-          if (url) {
-              setGeneratedVideo(url);
-          } else {
-              setGeneratedVideo("error");
-          }
-      } catch (err) {
-          console.error(err);
-      } finally {
-          setIsLoading(false);
-      }
-  };
-
-  // --- CONCIERGE HANDLERS ---
   const handleGenerateItinerary = async () => {
     setIsLoading(true);
-    setGeneratedItinerary(null);
     const result = await gemini.generateItinerary(tripDuration, tripFocus, tripInterests);
-    setGeneratedItinerary(result);
+    if (result) setGeneratedItinerary(result);
     setIsLoading(false);
   };
 
   const toggleInterest = (interest: string) => {
-    setTripInterests(prev => 
-      prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest]
-    );
+    setTripInterests(prev => prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest]);
   };
 
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
+  const handleAnalyzeImage = async () => {
+    if (!selectedFile || !filePreview || !scanPrompt) return;
+    setIsLoading(true);
+    try {
+        const base64 = filePreview.split(',')[1];
+        const result = await gemini.analyzeImage(base64, selectedFile.type, scanPrompt);
+        setAnalysisResult(result);
+    } catch (e) {
+        setAnalysisResult("Analysis failed.");
+    } finally {
+        setIsLoading(false);
+    }
   };
-
-  const containerClasses = isExpanded 
-    ? "fixed inset-2 md:inset-6 z-[60] rounded-[2.5rem] shadow-2xl flex flex-col border border-white/10 overflow-hidden no-print animate-in zoom-in-95 duration-300 backdrop-blur-3xl" 
-    : "fixed inset-0 md:inset-auto md:bottom-24 md:right-8 z-[60] w-full md:w-[480px] md:h-[750px] md:rounded-[2rem] shadow-2xl flex flex-col border border-white/10 overflow-hidden no-print animate-in slide-in-from-bottom-8 backdrop-blur-xl transition-all duration-300";
 
   return (
     <>
-      {!isOpen && (
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-8 right-8 z-50 p-4 rounded-full shadow-[0_0_20px_rgba(15,40,71,0.5)] hover:scale-110 transition-transform no-print flex items-center justify-center border border-white/10 group"
-          style={{ backgroundColor: BRAND.colors.primary, color: BRAND.colors.secondary }}
-        >
-          <Bot size={32} className="group-hover:rotate-12 transition-transform" />
-          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full animate-pulse border-2 border-white"></span>
-        </button>
-      )}
+      {/* Floating Button */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-white transition-all hover:scale-110 no-print"
+        style={{ backgroundColor: BRAND.colors.secondary, boxShadow: `0 0 30px ${BRAND.colors.secondary}66` }}
+      >
+        {isOpen ? <X size={28} /> : <Bot size={28} />}
+      </button>
 
+      {/* Main Panel */}
       {isOpen && (
-        <>
-          {isExpanded && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] animate-in fade-in"></div>}
-          
-          <div className={containerClasses} style={{ backgroundColor: BRAND.colors.primary }}>
+        <div className="fixed bottom-24 right-6 w-[90vw] md:w-[480px] h-[80vh] rounded-[2rem] shadow-2xl overflow-hidden z-50 flex flex-col border border-white/10 no-print animate-in slide-in-from-bottom-10" style={{ backgroundColor: BRAND.colors.primary }}>
+            
             {/* Header */}
-            <div className="p-5 flex justify-between items-center border-b border-white/5 relative overflow-hidden shrink-0" style={{ backgroundColor: `${BRAND.colors.primary}E6` }}>
-              <div className="absolute top-0 left-0 w-full h-1" style={{ background: `linear-gradient(to right, ${BRAND.colors.secondary}, ${BRAND.colors.alert}, ${BRAND.colors.accent})` }}></div>
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="p-2.5 rounded-xl border border-white/10" style={{ backgroundColor: `${BRAND.colors.secondary}33` }}>
-                  <Bot size={22} style={{ color: BRAND.colors.secondary }} />
+            <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0 bg-black/20">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-xl">
+                        <Sparkles size={20} className="text-emerald-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-black text-white text-lg leading-none">AI Architect</h3>
+                        <p className="text-[10px] text-white/50 uppercase tracking-widest mt-1">Powered by Gemini 2.5</p>
+                    </div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-black text-sm uppercase tracking-widest text-white">SafaArban</p>
-                    <button 
-                      onClick={() => setPersona(prev => prev === 'professional' ? 'casual' : 'professional')}
-                      className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide bg-white/10 hover:bg-white/20 transition-all text-white/80"
-                      title="Switch Persona"
-                    >
-                      {persona === 'professional' ? 'Executive' : 'Friendly'}
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></span>
-                    <span className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">AI Advisor Online</span>
-                  </div>
+                <div className="flex gap-2">
+                    {/* Strategy Toggles for Chat */}
+                    {mode === 'chat' && (
+                        <div className="flex bg-white/5 rounded-lg p-1">
+                            {['thinking', 'fast', 'search'].map((s) => (
+                                <button 
+                                    key={s}
+                                    onClick={() => setChatStrategy(s as any)}
+                                    className={`p-1.5 rounded-md transition-all ${chatStrategy === s ? 'bg-white/20 text-emerald-400' : 'text-white/30 hover:text-white'}`}
+                                    title={s}
+                                >
+                                    {s === 'thinking' ? <Bot size={14} /> : s === 'fast' ? <Zap size={14} /> : <FileSearch size={14} />}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
-              </div>
-              <div className="flex items-center gap-2 relative z-10">
-                <button onClick={toggleExpand} className="hover:bg-white/10 p-2 rounded-lg text-white/50 hover:text-white transition-colors hidden md:block">
-                  {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-                </button>
-                <button onClick={() => { setIsOpen(false); setIsExpanded(false); stopLiveSession(); }} className="hover:bg-white/10 p-2 rounded-lg text-white/50 hover:text-white transition-colors">
-                  <X size={20} />
-                </button>
-              </div>
             </div>
 
-            {/* Mode Tabs */}
-            <div className="flex px-2 pb-2 pt-1 gap-1 border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar" style={{ backgroundColor: `${BRAND.colors.primary}E6` }}>
-              {[
-                { id: 'chat', label: 'Chat', icon: MessageSquare },
-                { id: 'live', label: 'Live', icon: Mic },
-                { id: 'visual', label: 'Image', icon: ImageIcon },
-                { id: 'video', label: 'Video', icon: Video },
-                { id: 'audio', label: 'Audio', icon: Music },
-                { id: 'scan', label: 'Scan', icon: Scan },
-                { id: 'concierge', label: 'Plan', icon: MapPin },
-              ].map((tab) => (
-                <button 
-                  key={tab.id}
-                  onClick={() => {
-                      if (mode === 'live' && tab.id !== 'live') stopLiveSession();
-                      setMode(tab.id as AssistantMode);
-                  }}
-                  className={`flex-1 min-w-fit px-3 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                    mode === tab.id 
-                    ? 'bg-white/10 shadow-inner text-white' 
-                    : 'text-white/40 hover:text-white hover:bg-white/5'
-                  }`}
-                  style={{ color: mode === tab.id ? BRAND.colors.secondary : undefined }}
-                >
-                  <tab.icon size={14} /> {tab.label}
-                </button>
-              ))}
+            {/* Mode Selector */}
+            <div className="flex overflow-x-auto p-2 gap-2 border-b border-white/5 bg-black/10 no-scrollbar shrink-0">
+                {[
+                    { id: 'chat', icon: MessageSquare, label: 'Chat' },
+                    { id: 'visual', icon: Sparkles, label: 'Visual' },
+                    { id: 'video', icon: Video, label: 'Veo' },
+                    { id: 'audio', icon: Music, label: 'Voice' },
+                    { id: 'concierge', icon: MapPin, label: 'Trips' },
+                    { id: 'scan', icon: Scan, label: 'Scan' },
+                ].map((m) => (
+                    <button
+                        key={m.id}
+                        onClick={() => setMode(m.id as any)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                            mode === m.id 
+                            ? 'bg-white text-[#051C2C]' 
+                            : 'text-white/50 hover:bg-white/5 hover:text-white'
+                        }`}
+                    >
+                        <m.icon size={14} /> {m.label}
+                    </button>
+                ))}
             </div>
 
             {/* Main Content Area */}
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar"
+              className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar relative"
               style={{ backgroundColor: BRAND.colors.primary }}
             >
+              {/* Background Texture */}
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none fixed"></div>
+
+              {/* CHAT MESSAGES */}
+              {mode === 'chat' && messages.map((msg, idx) => (
+                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 relative z-10`}>
+                    <div 
+                      className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                        msg.role === 'user' 
+                        ? 'bg-white text-[#051C2C] rounded-tr-none font-bold' 
+                        : 'bg-white/10 text-white rounded-tl-none border border-white/10 backdrop-blur-sm shadow-inner'
+                      }`}
+                    >
+                       {msg.role === 'model' ? <MarkdownRenderer content={msg.parts[0].text} /> : msg.parts[0].text}
+                       
+                       {/* Sources */}
+                       {msg.sources && msg.sources.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-2">
+                             {msg.sources.map((src: any, i: number) => (
+                                <a key={i} href={src.uri} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[9px] bg-black/20 hover:bg-black/40 px-2 py-1 rounded text-white/70 transition-colors">
+                                   {src.type === 'map' ? <MapPin size={10} /> : <ExternalLink size={10} />}
+                                   {src.title}
+                                </a>
+                             ))}
+                          </div>
+                       )}
+
+                       {/* Feedback/Actions */}
+                       {msg.role === 'model' && (
+                          <div className="flex items-center gap-3 mt-3 pt-2 border-t border-white/5 opacity-50 hover:opacity-100 transition-opacity">
+                             <button onClick={() => handleFeedback(idx, 'up')} className={`hover:text-emerald-400 ${msg.feedback === 'up' ? 'text-emerald-400' : ''}`}><ThumbsUp size={12} /></button>
+                             <button onClick={() => handleFeedback(idx, 'down')} className={`hover:text-red-400 ${msg.feedback === 'down' ? 'text-red-400' : ''}`}><ThumbsDown size={12} /></button>
+                             <button onClick={() => navigator.clipboard.writeText(msg.parts[0].text)} className="hover:text-white"><Copy size={12} /></button>
+                          </div>
+                       )}
+                    </div>
+                 </div>
+              ))}
+
               {/* VISUAL MODE */}
               {mode === 'visual' && (
-                <div className="space-y-6">
+                <div className="space-y-6 relative z-10">
                   <div className="bg-white/5 p-5 rounded-3xl border border-white/10 shadow-sm">
                      
                      {/* Sub-mode Toggles */}
@@ -808,11 +488,10 @@ const AIAssistant: React.FC = () => {
                               <button
                                 key={idx}
                                 onClick={() => setEditPrompt(template)}
-                                className="shrink-0 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-white/60 uppercase tracking-wider hover:text-[${BRAND.colors.primary}] transition-all whitespace-nowrap"
+                                className="shrink-0 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-white/60 uppercase tracking-wider hover:text-[#051C2C] transition-all whitespace-nowrap"
                                 style={{ 
                                     borderColor: 'rgba(255,255,255,0.1)',
-                                    '--hover-color': BRAND.colors.primary
-                                } as React.CSSProperties}
+                                }}
                                 onMouseOver={(e) => { e.currentTarget.style.backgroundColor = BRAND.colors.secondary; e.currentTarget.style.borderColor = BRAND.colors.secondary; e.currentTarget.style.color = BRAND.colors.primary }}
                                 onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
                               >
@@ -874,7 +553,7 @@ const AIAssistant: React.FC = () => {
               
               {/* VIDEO MODE */}
               {mode === 'video' && (
-                  <div className="space-y-6">
+                  <div className="space-y-6 relative z-10">
                       <div className="bg-white/5 p-5 rounded-3xl border border-white/10 shadow-sm">
                           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2" style={{ color: BRAND.colors.secondary }}>
                               <Video size={14} /> Veo Studio
@@ -967,7 +646,7 @@ const AIAssistant: React.FC = () => {
 
               {/* AUDIO MODE */}
               {mode === 'audio' && (
-                  <div className="space-y-6">
+                  <div className="space-y-6 relative z-10">
                       <div className="bg-white/5 p-6 rounded-3xl border border-white/10 shadow-sm text-center">
                           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-6 flex items-center justify-center gap-2 text-emerald-400">
                               <Music size={14} /> Transcription
@@ -1004,7 +683,7 @@ const AIAssistant: React.FC = () => {
 
               {/* CONCIERGE MODE */}
               {mode === 'concierge' && (
-                <div className="space-y-6">
+                <div className="space-y-6 relative z-10">
                   {/* Preferences Form */}
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 shadow-sm">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2" style={{ color: BRAND.colors.secondary }}>
@@ -1096,7 +775,7 @@ const AIAssistant: React.FC = () => {
                             <Calendar size={16} className="text-white/30" />
                           </div>
                           <div className="p-4 space-y-4">
-                            {day.items.map((item, idx) => (
+                            {day.items.map((item: any, idx: number) => (
                               <div key={idx} className="flex gap-4 group">
                                 <div className="flex flex-col items-center">
                                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[#0D2B4F] shadow-lg z-10 ${
@@ -1128,7 +807,7 @@ const AIAssistant: React.FC = () => {
 
               {/* SCAN MODE */}
               {mode === 'scan' && (
-                <div className="space-y-6">
+                <div className="space-y-6 relative z-10">
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 shadow-sm">
                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-6 flex items-center justify-center gap-2" style={{ color: BRAND.colors.secondary }}>
                         <Scan size={14} /> Document Intelligence
@@ -1182,11 +861,10 @@ const AIAssistant: React.FC = () => {
                             <button
                               key={idx}
                               onClick={() => setScanPrompt(template)}
-                              className="shrink-0 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-white/60 uppercase tracking-wider hover:text-[${BRAND.colors.primary}] transition-all"
+                              className="shrink-0 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-white/60 uppercase tracking-wider hover:text-[#051C2C] transition-all"
                               style={{ 
                                   borderColor: 'rgba(255,255,255,0.1)',
-                                  '--hover-color': BRAND.colors.primary
-                              } as React.CSSProperties}
+                              }}
                               onMouseOver={(e) => { e.currentTarget.style.backgroundColor = BRAND.colors.secondary; e.currentTarget.style.borderColor = BRAND.colors.secondary; e.currentTarget.style.color = BRAND.colors.primary }}
                               onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
                             >
@@ -1229,7 +907,7 @@ const AIAssistant: React.FC = () => {
               )}
               
               {isLoading && mode === 'chat' && (
-                <div className="flex justify-start animate-in slide-in-from-left-2">
+                <div className="flex justify-start animate-in slide-in-from-left-2 relative z-10">
                   <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-3">
                     <div className="flex gap-1">
                       <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: BRAND.colors.secondary }}></div>
@@ -1244,38 +922,30 @@ const AIAssistant: React.FC = () => {
               )}
             </div>
 
-            {/* Chat Input (Only show in Chat mode) */}
+            {/* Chat Input */}
             {mode === 'chat' && (
-              <div className="p-5 border-t border-white/5 shrink-0" style={{ backgroundColor: BRAND.colors.primary }}>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder={chatStrategy === 'search' ? "Search for latest regulations..." : "Ask about MISA licenses, taxes..."}
-                    className="w-full pl-6 pr-14 py-5 border border-white/10 rounded-[2rem] outline-none transition-all text-sm font-medium text-white placeholder:text-white/30 shadow-lg focus:shadow-white/5 focus:border-white/20"
-                    style={{ backgroundColor: `${BRAND.colors.primary}80`, borderColor: `${BRAND.colors.secondary}4D` }}
-                  />
-                  <button 
-                    onClick={handleSend}
-                    disabled={isLoading || !input.trim()}
-                    className="absolute right-2 top-2 bottom-2 p-3 rounded-[1.5rem] hover:bg-white transition-all disabled:opacity-50 flex items-center justify-center aspect-square"
-                    style={{ backgroundColor: BRAND.colors.secondary, color: BRAND.colors.primary }}
-                  >
-                    <Send size={18} />
-                  </button>
+                <div className="p-4 border-t border-white/10 bg-black/10 shrink-0">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                            placeholder="Ask me about Saudi business setup..."
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-6 pr-14 text-sm text-white focus:outline-none focus:border-[#C9A86A]/50 transition-all placeholder:text-white/20"
+                        />
+                        <button 
+                            onClick={handleSendMessage}
+                            disabled={!input.trim() || isLoading}
+                            className="absolute right-2 top-2 p-2 bg-[#C9A86A] text-[#051C2C] rounded-xl hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Send size={18} />
+                        </button>
+                    </div>
                 </div>
-                <p className="text-[8px] text-center text-white/20 mt-3 font-black uppercase tracking-[0.3em]">
-                  SafaArban Ltd • Private & Confidential
-                </p>
-              </div>
             )}
-          </div>
-        </>
+        </div>
       )}
     </>
   );
-};
-
-export default AIAssistant;
+}

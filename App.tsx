@@ -27,8 +27,6 @@ import { Page, CartItem, CorePageContent, User } from './types';
 import { SERVICES_DB, CORE_SERVICES_CONTENT, BRAND, BLOG_POSTS } from './constants';
 import { CheckCircle } from 'lucide-react';
 import { LanguageProvider } from './LanguageContext';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const AppContent: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('home');
@@ -98,6 +96,11 @@ const AppContent: React.FC = () => {
   };
 
   const navigateToServiceDetail = (slug: string) => {
+    // Check if it's a special navigation command
+    if (slug === 'special:misa-licenses') {
+      setActivePage('misa-licenses');
+      return;
+    }
     setActiveServiceSlug(slug);
     setActivePage('service-details');
     window.scrollTo(0, 0);
@@ -159,13 +162,19 @@ const AppContent: React.FC = () => {
   const currentServiceContent = activeServiceSlug ? getServiceContent(activeServiceSlug) : null;
   const isCurrentServiceInCart = activeServiceSlug && cart.includes(activeServiceSlug);
 
+  // --- ROUTING LOGIC ---
+
+  // Auth Guard for Portals
   if ((activePage === 'client-portal' || activePage === 'admin-portal') && !user) {
       setActivePage('login');
   }
 
+  // Full Screen Apps
   if (activePage === 'login') return <Login onLogin={handleLogin} onBack={() => setActivePage('home')} />;
   if (activePage === 'client-portal' && user?.role === 'client') return <ClientPortal user={user} onLogout={handleLogout} />;
   if (activePage === 'admin-portal' && user?.role === 'admin') return <AdminPortal user={user} onLogout={handleLogout} onNavigate={setActivePage} />;
+  
+  // Tools
   if (activePage === 'proposal-generator') return <ProposalGenerator onBack={() => user?.role === 'admin' ? setActivePage('admin-portal') : setActivePage('home')} />;
   if (activePage === 'agreement-generator') return <AgreementGenerator onBack={() => setActivePage('home')} />;
   if (activePage === 'misa-licenses') return <MisaLicensePage onBack={() => setActivePage('services')} onAddToCart={toggleCartItem} />;
@@ -182,6 +191,8 @@ const AppContent: React.FC = () => {
           schema={{ "@context": "https://schema.org", "@type": "LocalBusiness", "name": BRAND.name, "description": "Premium Gateway for Saudi Business Setup", "address": BRAND.contact.address, "telephone": BRAND.contact.phone, "priceRange": "$$$" }}
         />
       )}
+      
+      {/* Navbar Logic */}
       {!isFullScreenPage && (
         <Navbar activePage={activePage} setActivePage={setActivePage} cartCount={cart.length} onOpenTracker={() => setActivePage('login')} currency={currency} onToggleCurrency={toggleCurrency} />
       )}
@@ -224,8 +235,6 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => (
   <LanguageProvider>
     <AppContent />
-    <Analytics />
-    <SpeedInsights />
   </LanguageProvider>
 );
 

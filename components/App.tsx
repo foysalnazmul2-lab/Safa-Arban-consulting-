@@ -21,8 +21,10 @@ import ClientPortal from './ClientPortal';
 import AdminPortal from './AdminPortal';
 import Login from './Login';
 import ProposalGenerator from './ProposalGenerator';
-import { Page, CartItem, CorePageContent, User } from '../types';
-import { SERVICES_DB, CORE_SERVICES_CONTENT, BRAND, BLOG_POSTS } from '../constants';
+import AgreementGenerator from './AgreementGenerator';
+import MisaLicensePage from './MisaLicensePage';
+import { Page, CartItem, CorePageContent, User } from './types';
+import { SERVICES_DB, CORE_SERVICES_CONTENT, BRAND, BLOG_POSTS } from './constants';
 import { CheckCircle } from 'lucide-react';
 import { LanguageProvider } from '../LanguageContext';
 
@@ -94,9 +96,12 @@ const AppContent: React.FC = () => {
   };
 
   const navigateToServiceDetail = (slug: string) => {
+    if (slug === 'special:misa-licenses') {
+      setActivePage('misa-licenses');
+      return;
+    }
     setActiveServiceSlug(slug);
-    setActivePage('service-details');
-    window.scrollTo(0, 0);
+    // We no longer navigate away; we just show the modal
   };
 
   const handleLogin = (email: string, role: 'client' | 'admin' = 'client') => {
@@ -155,16 +160,24 @@ const AppContent: React.FC = () => {
   const currentServiceContent = activeServiceSlug ? getServiceContent(activeServiceSlug) : null;
   const isCurrentServiceInCart = activeServiceSlug && cart.includes(activeServiceSlug);
 
+  // --- ROUTING LOGIC ---
+
+  // Auth Guard for Portals
   if ((activePage === 'client-portal' || activePage === 'admin-portal') && !user) {
       setActivePage('login');
   }
 
+  // Full Screen Apps
   if (activePage === 'login') return <Login onLogin={handleLogin} onBack={() => setActivePage('home')} />;
   if (activePage === 'client-portal' && user?.role === 'client') return <ClientPortal user={user} onLogout={handleLogout} />;
   if (activePage === 'admin-portal' && user?.role === 'admin') return <AdminPortal user={user} onLogout={handleLogout} onNavigate={setActivePage} />;
+  
+  // Tools
   if (activePage === 'proposal-generator') return <ProposalGenerator onBack={() => user?.role === 'admin' ? setActivePage('admin-portal') : setActivePage('home')} />;
+  if (activePage === 'agreement-generator') return <AgreementGenerator onBack={() => setActivePage('home')} />;
+  if (activePage === 'misa-licenses') return <MisaLicensePage onBack={() => setActivePage('services')} onAddToCart={toggleCartItem} />;
 
-  const isFullScreenPage = activePage === 'quotation' || activePage === 'payment-auth' || activePage === 'service-details';
+  const isFullScreenPage = activePage === 'quotation' || activePage === 'payment-auth';
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col" style={{ color: BRAND.colors.primary }}>
@@ -176,11 +189,10 @@ const AppContent: React.FC = () => {
           schema={{ "@context": "https://schema.org", "@type": "LocalBusiness", "name": BRAND.name, "description": "Premium Gateway for Saudi Business Setup", "address": BRAND.contact.address, "telephone": BRAND.contact.phone, "priceRange": "$$$" }}
         />
       )}
+      
+      {/* Navbar Logic */}
       {!isFullScreenPage && (
         <Navbar activePage={activePage} setActivePage={setActivePage} cartCount={cart.length} onOpenTracker={() => setActivePage('login')} currency={currency} onToggleCurrency={toggleCurrency} />
-      )}
-      {activePage === 'service-details' && (
-        <Navbar activePage='services' setActivePage={setActivePage} cartCount={cart.length} onOpenTracker={() => setActivePage('login')} currency={currency} onToggleCurrency={toggleCurrency} />
       )}
 
       <main className="flex-grow">
@@ -189,7 +201,6 @@ const AppContent: React.FC = () => {
         {activePage === 'blog' && <Blog onAddToCart={toggleCartItem} cart={cart} />}
         {activePage === 'about' && <About />}
         {activePage === 'contact' && <ContactPage />}
-        {activePage === 'service-details' && currentServiceContent && <ServiceDetails content={currentServiceContent} onBack={() => setActivePage('services')} actionLabel="Add to Quote" onAction={() => activeServiceSlug && toggleCartItem(activeServiceSlug)} isActionActive={!!isCurrentServiceInCart} />}
         {activePage === 'privacy' && <PrivacyPolicy />}
         {activePage === 'terms' && <TermsOfService />}
         {activePage === 'quotation' && <Quotation items={getCartItems()} orderId={orderId} onBack={() => setActivePage('services')} onProceed={() => setActivePage('payment-auth')} onAddItem={toggleCartItem} onRemoveItem={toggleCartItem} currency={currency} />}
@@ -197,7 +208,17 @@ const AppContent: React.FC = () => {
       </main>
 
       {!isFullScreenPage && <Footer setActivePage={setActivePage} onServiceClick={navigateToServiceDetail} />}
-      {activePage === 'service-details' && <Footer setActivePage={setActivePage} onServiceClick={navigateToServiceDetail} />}
+
+      {/* Service Details Modal */}
+      {activeServiceSlug && currentServiceContent && (
+        <ServiceDetails 
+          content={currentServiceContent} 
+          onBack={() => setActiveServiceSlug('')} 
+          actionLabel="Add to Quote" 
+          onAction={() => activeServiceSlug && toggleCartItem(activeServiceSlug)} 
+          isActionActive={!!isCurrentServiceInCart} 
+        />
+      )}
 
       <AIAssistant />
       <LiveNotifications />

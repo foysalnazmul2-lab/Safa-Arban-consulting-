@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo } from 'react';
-import { CreditCard, ChevronLeft, ChevronRight, MapPin, Download, Globe, FileText, Landmark, QrCode, Zap, CheckCircle2, Plus, Tag, Gift, Trash2, X, Printer } from 'lucide-react';
+import { CreditCard, ChevronLeft, ChevronRight, MapPin, Download, Globe, FileText, Landmark, QrCode, Zap, CheckCircle2, Plus, Tag, Gift, Trash2, X, Printer, Loader2 } from 'lucide-react';
 import { CartItem } from '../types';
 import { BRAND, SERVICES_DB } from '../constants';
 import { SafaArbanLogo } from './Logo';
@@ -14,6 +13,10 @@ interface QuotationProps {
   onRemoveItem?: (id: string) => void;
   currency?: 'SAR' | 'USD';
 }
+
+// --- STATIC ASSETS FOR PDF ---
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 84" width="380" height="84"><g transform="translate(4, 4)"><path d="M45 10 L75 10 L55 35 L25 35 Z" fill="#E94E4E" /><path d="M25 40 L55 40 L45 65 L15 65 Z" fill="#0D2B4F" /></g><g transform="translate(90, 52)"><text font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="40" fill="#0D2B4F" letter-spacing="-0.02em">SafaArban</text><text x="215" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="40" fill="#E94E4E" letter-spacing="-0.02em">Ltd</text></g></svg>`;
+const LOGO_DATA_URI = `data:image/svg+xml;base64,${btoa(LOGO_SVG)}`;
 
 // --- AUTOMATIC BUNDLE LOGIC ---
 const BUNDLES = [
@@ -46,37 +49,12 @@ const VALID_PROMOS: Record<string, number> = {
   'WELCOME': 0.05     // 5% off
 };
 
-const OfficialStamp = () => (
-  <svg width="160" height="160" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="opacity-80 mix-blend-multiply pointer-events-none select-none rotate-[-12deg]">
-    <defs>
-      <path id="sealTop" d="M 25,100 A 75,75 0 0,1 175,100" fill="none" />
-      <path id="sealBottom" d="M 25,100 A 75,75 0 0,0 175,100" fill="none" />
-    </defs>
-    
-    <circle cx="100" cy="100" r="95" fill="none" stroke={BRAND.colors.primary} strokeWidth="2" />
-    <circle cx="100" cy="100" r="90" fill="none" stroke={BRAND.colors.primary} strokeWidth="1" strokeDasharray="4,4" />
-    <circle cx="100" cy="100" r="70" fill="none" stroke={BRAND.colors.primary} strokeWidth="1" />
-
-    <text fill={BRAND.colors.primary} fontSize="14" fontWeight="bold" fontFamily="Arial, sans-serif" letterSpacing="2">
-      <textPath href="#sealTop" startOffset="50%" textAnchor="middle">SAFAARBAN LTD • RIYADH</textPath>
-    </text>
-    <text fill={BRAND.colors.primary} fontSize="10" fontWeight="bold" fontFamily="Arial, sans-serif" letterSpacing="1">
-       <textPath href="#sealBottom" startOffset="50%" textAnchor="middle">AUTHORIZED SIGNATORY • 1010989782</textPath>
-    </text>
-    
-    <g transform="translate(100, 100)" textAnchor="middle">
-        <text y="-10" fontSize="24" fontWeight="bold" fontFamily="Arial, sans-serif" fill={BRAND.colors.secondary}>PAID</text>
-        <text y="10" fontSize="8" fontWeight="bold" fontFamily="Arial, sans-serif" fill={BRAND.colors.primary}>PENDING APPROVAL</text>
-        <path d="M-20,15 L20,15" stroke={BRAND.colors.primary} strokeWidth="1" />
-    </g>
-  </svg>
-);
-
 const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId, onAddItem, onRemoveItem, currency = 'SAR' }) => {
   const [isFastTrack, setIsFastTrack] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [promoError, setPromoError] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const RATE = currency === 'USD' ? 0.2666 : 1;
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -159,22 +137,39 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
 
   const handleExport = () => {
     const element = document.getElementById('printable-invoice');
+    
+    if (!element) return;
+    setIsDownloading(true);
+
     const opt = {
       margin: 0, 
       filename: `SafaArban_Invoice_${orderId}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, windowWidth: 794 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false, 
+        scrollY: 0,
+        // Remove fixed windowWidth to allow proper A4 scaling from element dimensions
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
     if ((window as any).html2pdf) {
-         const btn = document.getElementById('export-btn');
-         if(btn) btn.innerText = 'Generating...';
          (window as any).html2pdf().set(opt).from(element).save().then(() => {
-            if(btn) btn.innerText = 'Print / Export PDF';
+            setIsDownloading(false);
+         }).catch((err: any) => {
+            console.error(err);
+            setIsDownloading(false);
          });
     } else {
         window.print();
+        setIsDownloading(false);
     }
   };
 
@@ -192,9 +187,11 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
             <button 
               id="export-btn"
               onClick={handleExport}
-              className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-200 px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm text-[#0D2B4F]"
+              disabled={isDownloading}
+              className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-200 px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm text-[#0D2B4F] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <Printer size={16} /> Print / PDF
+              {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              {isDownloading ? 'Downloading...' : 'Download PDF'}
             </button>
             <button 
               onClick={onProceed} 
@@ -255,7 +252,7 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
 
         {/* --- INVOICE DOCUMENT --- */}
         <div className="overflow-x-auto pb-10 -mx-2 px-2 md:mx-0 md:px-0">
-          <div id="printable-invoice" className="bg-white shadow-2xl min-h-[297mm] w-[210mm] mx-auto relative flex flex-col overflow-hidden text-[#0D2B4F]">
+          <div id="printable-invoice" className="bg-white shadow-2xl w-[210mm] min-h-[297mm] mx-auto relative flex flex-col overflow-hidden text-[#0D2B4F]">
             
             {/* Top Color Bar */}
             <div className="h-3 w-full bg-gradient-to-r from-[#0D2B4F] via-[#E94E4E] to-[#F7C948]"></div>
@@ -266,7 +263,7 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
             {/* Header */}
             <header className="px-12 pt-12 pb-8 flex justify-between items-start relative z-10">
                 <div>
-                    <SafaArbanLogo className="h-14 w-auto mb-6" />
+                    <img src={LOGO_DATA_URI} alt="SafaArban Logo" className="h-14 w-auto mb-6" />
                     <div className="text-[10px] uppercase tracking-widest font-bold text-slate-400 space-y-1.5">
                         <p className="flex items-center gap-2"><MapPin size={10} /> {BRAND.contact.address}</p>
                         <p className="flex items-center gap-2"><Globe size={10} /> Riyadh, Kingdom of Saudi Arabia</p>
@@ -472,7 +469,7 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
                 </div>
             </div>
 
-            {/* Footer / Stamp */}
+            {/* Footer / Digital Verification */}
             <div className="px-12 pb-12 flex justify-between items-end relative z-10">
                 <div className="text-[9px] text-slate-400 max-w-sm leading-relaxed space-y-1">
                     <p className="font-bold text-[#0D2B4F] mb-1 uppercase tracking-widest">Terms & Conditions</p>
@@ -480,14 +477,9 @@ const Quotation: React.FC<QuotationProps> = ({ items, onBack, onProceed, orderId
                     <p>2. Government fees are estimated and subject to change by authorities.</p>
                     <p>3. This quotation is valid for 14 days from the issue date.</p>
                 </div>
-                <div className="relative text-center">
-                    <div className="absolute bottom-4 right-0 left-0 flex justify-center">
-                        <OfficialStamp />
-                    </div>
-                    <div className="relative z-10 mt-8">
-                        <div className="h-px w-40 bg-slate-300 mb-2 mx-auto"></div>
-                        <p className="text-[9px] font-bold uppercase text-[#0D2B4F] tracking-widest">Authorized Signature</p>
-                    </div>
+                <div className="text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#0D2B4F] opacity-50">Digital Invoice</p>
+                    <p className="text-[8px] text-slate-400 mt-1">This document is electronically generated and valid without signature.</p>
                 </div>
             </div>
             
